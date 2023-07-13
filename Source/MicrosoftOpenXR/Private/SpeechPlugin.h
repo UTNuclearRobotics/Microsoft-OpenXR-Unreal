@@ -73,7 +73,6 @@ namespace MicrosoftOpenXR
 		XrSession Session;
 
 		FString dictation_; // <- add
-		UMicrosoftOpenXRFunctionLibrary* MicrosoftOpenXRFunctionLibRef;
 
 		// Remoting
 #if SUPPORTS_REMOTING

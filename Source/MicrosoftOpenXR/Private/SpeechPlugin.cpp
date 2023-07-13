@@ -18,6 +18,7 @@ namespace MicrosoftOpenXR
 {
 	void FSpeechPlugin::Register()
 	{
+		UE_LOG(LogHMD, Warning, TEXT("Register called."));
 		IModularFeatures::Get().RegisterModularFeature(GetModularFeatureName(), this);
 
 		FGameDelegates::Get().GetEndPlayMapDelegate().AddRaw(this, &FSpeechPlugin::OnEndPlay);
@@ -50,6 +51,7 @@ namespace MicrosoftOpenXR
 
 	const void* FSpeechPlugin::OnCreateSession(XrInstance InInstance, XrSystemId InSystem, const void* InNext)
 	{
+		
 #if SUPPORTS_REMOTING
 		bIsRemotingSpeechExtensionEnabled =
 			IOpenXRHMDModule::Get().IsExtensionEnabled(XR_MSFT_HOLOGRAPHIC_REMOTING_SPEECH_EXTENSION_NAME);
@@ -66,8 +68,9 @@ namespace MicrosoftOpenXR
 
 	const void* FSpeechPlugin::OnBeginSession(XrSession InSession, const void* InNext)
 	{
+		UE_LOG(LogHMD, Warning, TEXT("OnBeginSession called."));
 		Session = InSession;
-		
+		dictation_ = FString("Say Something!");
 		// Add all speech keywords from the input system
 		const TArray <FInputActionSpeechMapping>& SpeechMappings = GetDefault<UInputSettings>()->GetSpeechMappings();
 		for (const FInputActionSpeechMapping& SpeechMapping : SpeechMappings)
@@ -88,6 +91,7 @@ namespace MicrosoftOpenXR
 
 	void FSpeechPlugin::OnEvent(XrSession InSession, const XrEventDataBaseHeader* InHeader)
 	{
+		UE_LOG(LogHMD, Warning, TEXT("OnEvent called."));
 #if SUPPORTS_REMOTING
 		switch ((XrRemotingSpeechStructureType)InHeader->type)
 		{
@@ -124,6 +128,7 @@ namespace MicrosoftOpenXR
 
 	void FSpeechPlugin::AddKeywords(TArray<FKeywordInput> KeywordsToAdd)
 	{
+		UE_LOG(LogHMD, Warning, TEXT("AddKeywords called."));
 		if (bIsRemotingSpeechExtensionEnabled)
 		{
 			UE_LOG(LogHMD, Warning, TEXT("Remoting speech does not currently support adding keywords at runtime."));
@@ -182,6 +187,7 @@ namespace MicrosoftOpenXR
 
 	void FSpeechPlugin::RemoveKeywords(TArray<FString> KeywordsToRemove)
 	{
+		UE_LOG(LogHMD, Warning, TEXT("RemoveKeywords called."));
 		if (bIsRemotingSpeechExtensionEnabled)
 		{
 			UE_LOG(LogHMD, Warning, TEXT("Remoting speech does not currently support removing keywords at runtime."));
@@ -232,6 +238,7 @@ namespace MicrosoftOpenXR
 
 	APlayerController* FSpeechPlugin::GetPlayerController()
 	{
+		UE_LOG(LogHMD, Warning, TEXT("GetPlayerController Called"));
 		for (const FWorldContext& Context : GEngine->GetWorldContexts())
 		{
 			if (Context.WorldType == EWorldType::Game || Context.WorldType == EWorldType::PIE)
@@ -249,6 +256,7 @@ namespace MicrosoftOpenXR
 
 	void FSpeechPlugin::RegisterKeyword(FKey Key, FString Keyword)
 	{
+		UE_LOG(LogHMD, Warning, TEXT("Register Keyword"));
 		TArray<FKey> Keys;
 		EKeys::GetAllKeys(Keys);
 
@@ -270,6 +278,7 @@ namespace MicrosoftOpenXR
 
 	void FSpeechPlugin::CallSpeechCallback(FKey InKey)
 	{
+		UE_LOG(LogHMD, Warning, TEXT("Call Speech callback"));
 		APlayerController* PlayerController = GetPlayerController();
 		if (PlayerController == nullptr)
 		{
@@ -342,12 +351,14 @@ namespace MicrosoftOpenXR
 
 	void FSpeechPlugin::StartSpeechRecognizer()
 	{
+		
+		UE_LOG(LogHMD, Warning, TEXT("Start Speech Recognizer Called"));
 		if (bIsRemotingSpeechExtensionEnabled)
 		{
+			UE_LOG(LogHMD, Warning, TEXT("Start Speech Recognizer Called for remoting"));
 			RegisterSpeechCommandsWithRemoting();
 			return;
 		}
-		
 
 		// removed -> //SpeechRecognitionListConstraint constraint = SpeechRecognitionListConstraint(Keywords);
 		SpeechRecognitionTopicConstraint dictationConstraint = SpeechRecognitionTopicConstraint(winrt::Windows::Media::SpeechRecognition::SpeechRecognitionScenario::Dictation, winrt::hstring(*FString("dictation"))); // <- added
@@ -410,6 +421,7 @@ namespace MicrosoftOpenXR
 		ResultsGeneratedToken = SpeechRecognizer.ContinuousRecognitionSession().ResultGenerated(
 			[&](SpeechContinuousRecognitionSession sender, SpeechContinuousRecognitionResultGeneratedEventArgs args)
 			{
+				UE_LOG(LogHMD, Warning, TEXT("Recognized Something"));
 				if (args.Result().Confidence() == SpeechRecognitionConfidence::Medium ||
 					args.Result().Confidence() == SpeechRecognitionConfidence::High)
 				{

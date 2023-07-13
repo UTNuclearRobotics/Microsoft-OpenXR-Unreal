@@ -4,7 +4,7 @@
 #include "HolographicWindowAttachmentPlugin.h"
 
 #if PLATFORM_HOLOLENS
-#include "HoloLens/HoloLensApplication.h"
+#include "HoloLensApplication.h"
 
 #include <Unknwn.h>
 
@@ -30,7 +30,7 @@ namespace MicrosoftOpenXR
 	{
 		// Ensure xrCreateSession is called from the game thread which is the main app view CoreWindow thread.
 		check(IsInGameThread());
-		if (IOpenXRHMDPlugin::Get().IsExtensionEnabled(XR_MSFT_HOLOGRAPHIC_WINDOW_ATTACHMENT_EXTENSION_NAME))
+		if (IOpenXRHMDModule::Get().IsExtensionEnabled(XR_MSFT_HOLOGRAPHIC_WINDOW_ATTACHMENT_EXTENSION_NAME))
 		{
 			// If the app requests to start in VR then the XrSession should take over the main app view's CoreWindow and
 			// HolographicSpace. This ensures keyboard input and other things will still route to the engine. Otherwise the

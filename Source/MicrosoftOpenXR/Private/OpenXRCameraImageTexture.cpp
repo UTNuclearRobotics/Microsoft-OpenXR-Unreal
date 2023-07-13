@@ -2,10 +2,6 @@
 // Licensed under the MIT License.
 
 #include "OpenXRCameraImageTexture.h"
-#include <Misc/EngineVersionComparison.h>
-
-#if !UE_VERSION_OLDER_THAN(4, 27, 0) // See OpenXRCameraImageTexture_UE246.cpp for the 4.26 implementation.
-
 #include "GlobalShader.h"
 #include "RenderUtils.h"
 #include "RHIStaticStates.h"
@@ -14,7 +10,6 @@
 #include "SceneUtils.h"
 #include "MediaShaders.h"
 #include "HeadMountedDisplayTypes.h"
-#include "Misc/EngineVersion.h"
 
 #if PLATFORM_WINDOWS || PLATFORM_HOLOLENS
 //-------------------------------------------------------------------------------------------------
@@ -133,14 +128,10 @@ public:
 					break;
 				}
 
-				CopyTextureRef = DX11RHI->RHICreateTexture2DFromResource(PF_NV12, TexCreate_Dynamic | TexCreate_ShaderResource, FClearValueBinding::None, cameraImageTexture.Get());
+				CopyTextureRef = GetID3D11DynamicRHI()->RHICreateTexture2DFromResource(PF_NV12, TexCreate_Dynamic | TexCreate_ShaderResource, FClearValueBinding::None, cameraImageTexture.Get());
 			}
 			else if (bIsDx12)
 			{
-#if UE_VERSION_OLDER_THAN(4, 27, 1) // This feature is disabled for 4.27.0 because the engine has a bug which causes an assertion in debug buids.
-				break;
-#endif
-
 				FD3D12DynamicRHI* DX12RHI = StaticCast<FD3D12DynamicRHI*>(GDynamicRHI);
 
 				TComPtr<ID3D12Resource> cameraImageTexture;
@@ -150,7 +141,7 @@ public:
 					break;
 				}
 
-				CopyTextureRef = DX12RHI->RHICreateTexture2DFromResource(PF_NV12, TexCreate_Dynamic, FClearValueBinding::None, cameraImageTexture.Get());
+				CopyTextureRef = GetID3D12DynamicRHI()->RHICreateTexture2DFromResource(PF_NV12, TexCreate_Dynamic, FClearValueBinding::None, cameraImageTexture.Get());
 			}
 			else
 			{
@@ -167,10 +158,13 @@ public:
 
 			// Create the render target
 			{
-				FRHIResourceCreateInfo CreateInfo;
-				TRefCountPtr<FRHITexture2D> DummyTexture2DRHI;
-				// Create our render target that we'll convert to
-				RHICreateTargetableShaderResource2D(Size.X, Size.Y, PF_B8G8R8A8, 1, TexCreate_Dynamic, TexCreate_RenderTargetable, false, CreateInfo, DecodedTextureRef, DummyTexture2DRHI);
+				const FRHITextureCreateDesc Desc =
+					FRHITextureCreateDesc::Create2D(TEXT("OpenXRDecodedTexture"))
+					.SetExtent(Size.X, Size.Y)
+					.SetFormat(PF_B8G8R8A8)
+					.SetFlags(TexCreate_Dynamic | TexCreate_RenderTargetable);
+
+				DecodedTextureRef = RHICreateTexture(Desc);
 			}
 
 			{
@@ -185,9 +179,15 @@ public:
 		// Default to an empty 1x1 texture if we don't have a camera image or failed to convert
 		if (!bDidConvert)
 		{
-			FRHIResourceCreateInfo CreateInfo;
 			Size.X = Size.Y = 1;
-			DecodedTextureRef = RHICreateTexture2D(Size.X, Size.Y, PF_B8G8R8A8, 1, 1, TexCreate_ShaderResource, CreateInfo);
+
+			const FRHITextureCreateDesc Desc =
+				FRHITextureCreateDesc::Create2D(TEXT("OpenXRDecodedTextureFallback"))
+				.SetExtent(Size.X, Size.Y)
+				.SetFormat(PF_B8G8R8A8)
+				.SetFlags(TexCreate_ShaderResource);
+
+			DecodedTextureRef = RHICreateTexture(Desc);
 		}
 
 		TextureRHI = DecodedTextureRef;
@@ -252,6 +252,7 @@ private:
 			GraphicsPSOInit.DepthStencilState = TStaticDepthStencilState<false, CF_Always>::GetRHI();
 			GraphicsPSOInit.RasterizerState = TStaticRasterizerState<>::GetRHI();
 			GraphicsPSOInit.BlendState = TStaticBlendStateWriteMask<CW_RGBA, CW_NONE, CW_NONE, CW_NONE, CW_NONE, CW_NONE, CW_NONE, CW_NONE>::GetRHI();
+			//GraphicsPSOInit.BlendState = TStaticBlendState<BO_Add, BF_SourceAlpha, BF_InverseSourceAlpha, BO_Add, BF_Zero, BF_One>::GetRHI();
 			GraphicsPSOInit.PrimitiveType = PT_TriangleStrip;
 
 			// configure media shaders
@@ -264,15 +265,15 @@ private:
 			// Use the sample format to choose the conversion path
 			TShaderMapRef<FNV12ConvertPS> ConvertShader(ShaderMap);
 			GraphicsPSOInit.BoundShaderState.PixelShaderRHI = ConvertShader.GetPixelShader();
-			SetGraphicsPipelineState(CommandList, GraphicsPSOInit);
+			SetGraphicsPipelineState(CommandList, GraphicsPSOInit, 0);
 
 			FShaderResourceViewRHIRef Y_SRV = RHICreateShaderResourceView(CopyTextureRef, 0, 1, PF_G8);
 			FShaderResourceViewRHIRef UV_SRV = RHICreateShaderResourceView(CopyTextureRef, 0, 1, PF_R8G8);
 
-			ConvertShader->SetParameters(CommandList, CopyTextureRef->GetSizeXY(), Y_SRV, UV_SRV, OutputDim, MediaShaders::YuvToSrgbDefault, MediaShaders::YUVOffset8bits, false);
+			ConvertShader->SetParameters(CommandList, CopyTextureRef->GetSizeXY(), Y_SRV, UV_SRV, OutputDim, MediaShaders::YuvToRgbRec601Scaled, MediaShaders::YUVOffset8bits, false);
 
 			// draw full size quad into render target
-			FVertexBufferRHIRef VertexBuffer = CreateTempMediaVertexBuffer();
+			FBufferRHIRef VertexBuffer = CreateTempMediaVertexBuffer();
 			CommandList.SetStreamSource(0, VertexBuffer, 0);
 			// set viewport to RT size
 			CommandList.SetViewport(0, 0, 0.0f, OutputDim.X, OutputDim.Y, 1.0f);
@@ -334,9 +335,9 @@ void UOpenXRCameraImageTexture::Init(std::shared_ptr<winrt::handle> handle)
 	if (LastUpdateFrame != GFrameCounter)
 	{
 		LastUpdateFrame = GFrameCounter;
-		if (Resource != nullptr)
+		if (GetResource() != nullptr)
 		{
-			FOpenXRCameraImageResource* LambdaResource = static_cast<FOpenXRCameraImageResource*>(Resource);
+			FOpenXRCameraImageResource* LambdaResource = static_cast<FOpenXRCameraImageResource*>(GetResource());
 			ENQUEUE_RENDER_COMMAND(Init_RenderThread)(
 				[LambdaResource, handle](FRHICommandListImmediate&)
 			{
@@ -351,5 +352,3 @@ void UOpenXRCameraImageTexture::Init(std::shared_ptr<winrt::handle> handle)
 	}
 }
 #endif
-
-#endif // !UE_VERSION_OLDER_THAN(4, 27, 0)

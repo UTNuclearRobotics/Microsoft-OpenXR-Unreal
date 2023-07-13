@@ -73,9 +73,21 @@ bool FAzureSpatialAnchorsForOpenXR::CreateSession()
 		return true;
 	}
 
-	m_cloudSession = winrt::Microsoft::Azure::SpatialAnchors::CloudSpatialAnchorSession();
+	try 
+	{
+		UE_LOG(LogHMD, Log, TEXT("FAzureSpatialAnchorsForOpenXR::CreateSession creating a CloudSpatialAnchorSession"));
+		m_cloudSession = winrt::Microsoft::Azure::SpatialAnchors::CloudSpatialAnchorSession();
+	}
+	catch (const std::exception& ex) {
+		FString exceptionString = FString::Printf(TEXT("Exception occurred: %s"), UTF8_TO_TCHAR(ex.what()));
+		UE_LOG(LogHMD, Log, TEXT("FAzureSpatialAnchorsForOpenXR::CloudSptialAnchorSession Error %s"), *exceptionString);
+	}
+	
 
+	UE_LOG(LogHMD, Log, TEXT("FAzureSpatialAnchorsForOpenXR::CreateSession Adding Event Listeners"));
 	AddEventListeners();
+
+	UE_LOG(LogHMD, Log, TEXT("FAzureSpatialAnchorsForOpenXR::CreateSession returning m_cloudsession"));
 
 	return m_cloudSession != nullptr;
 }

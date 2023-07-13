@@ -219,7 +219,7 @@ namespace MicrosoftOpenXR
 				auto& destVert = MeshUpdate->Vertices[j];
 				const auto& srcVert = HandState.Vertices[j];
 
-				destVert = ToFVector(srcVert.position, XRTrackingSystem->GetWorldToMetersScale());
+				destVert = ToFVector3f(srcVert.position, XRTrackingSystem->GetWorldToMetersScale());
 			}
 		}
 		TrackedMeshHolder->EndMeshUpdates();
@@ -307,7 +307,7 @@ namespace MicrosoftOpenXR
 		return false;
 	}
 
-	bool FHandMeshPlugin::GetHandMeshData(EControllerHand Hand, TArray<struct FVector>& OutVertices, TArray<struct FVector>& OutNormals, TArray<int32>& OutIndices, FTransform& OutHandMeshTransform) const
+	bool FHandMeshPlugin::GetHandMeshData(EControllerHand Hand, TArray<FVector>& OutVertices, TArray<FVector>& OutNormals, TArray<int32>& OutIndices, FTransform& OutHandMeshTransform) const
 	{
 		check(IsInGameThread());
 
@@ -393,3 +393,5 @@ namespace MicrosoftOpenXR
 	}
 
 }	 // namespace MicrosoftOpenXR
+
+#undef LOCTEXT_NAMESPACE

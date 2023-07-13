@@ -20,7 +20,6 @@
 
 #include "IOpenXRARTrackedGeometryHolder.h"
 #include "IOpenXRARModule.h"
-#include "Misc/EngineVersionComparison.h"
 
 #include "TrackedGeometryCollision.h"
 #include "ARBlueprintLibrary.h"
@@ -97,7 +96,7 @@ namespace MicrosoftOpenXR
 			bool HasChanged = false;
 			OA::ObjectInstanceState LastKnownState;
 
-			TArray<struct FVector> Vertices;
+			TArray<FVector3f> Vertices;
 			TArray<MRMESH_INDEX_TYPE> Indices;
 
 			TrackedGeometryCollision* CollisionInfo = nullptr;

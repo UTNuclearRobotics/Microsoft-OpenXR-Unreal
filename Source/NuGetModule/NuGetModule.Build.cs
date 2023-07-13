@@ -3,11 +3,10 @@
 
 using System.IO;
 using System.Linq;
-using System.Runtime.Remoting.Messaging;
-using UnrealBuildTool;
-using Tools.DotNETCommon;
 using System;
 using System.Collections.Generic;
+using EpicGames.Core;
+using UnrealBuildTool;
 
 public class NuGetModule : ModuleRules
 {
@@ -49,19 +48,21 @@ public class NuGetModule : ModuleRules
 			string NugetExe = Path.Combine(NugetFolder, "nuget.exe");
 			if (!File.Exists(NugetExe))
 			{
-				using (System.Net.WebClient myWebClient = new System.Net.WebClient())
+				// The System.Net assembly is not referenced by the build tool so it must be loaded dynamically.
+				var assembly = System.Reflection.Assembly.Load("System.Net");
+				var webClient = assembly.CreateInstance("System.Net.WebClient");
+				using ((IDisposable)webClient)
 				{
 					// we aren't focusing on a specific nuget version, we can use any of them but the latest one is preferable
-					myWebClient.DownloadFile(@"https://dist.nuget.org/win-x86-commandline/latest/nuget.exe", NugetExe);
+					var downloadFileMethod = webClient.GetType().GetMethod("DownloadFile", new Type[] { typeof(string), typeof(string) });
+					downloadFileMethod.Invoke(webClient, new object[] { @"https://dist.nuget.org/win-x86-commandline/latest/nuget.exe", NugetExe } );
 				}
 			}
 
 			// run nuget to update the packages
 			{
-				var StartInfo = new System.Diagnostics.ProcessStartInfo(NugetExe, string.Format("install \"{0}\" -OutputDirectory \"{1}\"", Path.Combine(ModuleDirectory, "packages.config"), NugetFolder));
-				StartInfo.UseShellExecute = false;
-				StartInfo.CreateNoWindow = true;
-				var ExitCode = Utils.RunLocalProcessAndPrintfOutput(StartInfo);
+				int ExitCode = 0;
+				Utils.RunLocalProcessAndReturnStdOut(NugetExe, string.Format("install \"{0}\" -OutputDirectory \"{1}\"", Path.Combine(ModuleDirectory, "packages.config"), NugetFolder), out ExitCode, true);
 				if (ExitCode < 0)
 				{
 					throw new BuildException("Failed to get nuget packages.  See log for details.");
@@ -209,10 +210,8 @@ public class NuGetModule : ModuleRules
 				}
 
 				// generate winrt headers and add them into include paths
-				var StartInfo = new System.Diagnostics.ProcessStartInfo(CppWinRTExe, string.Format("{0} -input \"{1}\" -output \"{2}\"", WinMDFilesStringbuilder, Target.WindowsPlatform.WindowsSdkVersion, CppWinRTFolder));
-				StartInfo.UseShellExecute = false;
-				StartInfo.CreateNoWindow = true;
-				var ExitCode = Utils.RunLocalProcessAndPrintfOutput(StartInfo);
+				int ExitCode = 0;
+				Utils.RunLocalProcessAndReturnStdOut(CppWinRTExe, string.Format("{0} -input \"{1}\" -output \"{2}\"", WinMDFilesStringbuilder, Target.WindowsPlatform.WindowsSdkVersion, CppWinRTFolder), out ExitCode, true);   
 				if (ExitCode < 0)
 				{
 					throw new BuildException("Failed to get generate WinRT headers.  See log for details.");

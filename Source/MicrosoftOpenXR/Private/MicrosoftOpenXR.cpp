@@ -260,9 +260,6 @@ TArray<FARTraceResult> UMicrosoftOpenXRFunctionLibrary::LineTraceTrackedAzureObj
 	return {};
 }
 
-void UMicrosoftOpenXRFunctionLibrary::GetMicrosoftOpenXRFunctionLibraryRef(UMicrosoftOpenXRFunctionLibrary* MircrosoftOpenXRFunctionLibraryRef)
-{
-}
 
 FString UMicrosoftOpenXRFunctionLibrary::GetSpeechDictation()
 {

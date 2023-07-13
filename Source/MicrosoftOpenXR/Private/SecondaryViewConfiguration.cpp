@@ -24,22 +24,14 @@ namespace MicrosoftOpenXR
 {
 	void FSecondaryViewConfigurationPlugin::Register()
 	{
-		const FEngineVersion EngineVersion = FEngineVersion::Current();
-		const FEngineVersionBase SupportedVersion = FEngineVersionBase(4, 26, 2);
-		EVersionComponent VersionComponent;
-		if (FEngineVersion::GetNewest(EngineVersion, SupportedVersion, &VersionComponent) == EVersionComparison::Second)
-		{
-			UE_LOG(LogHMD, Log, TEXT("Secondary view configuration is not supported with engine version %s"),
-				*EngineVersion.ToString());
-			return;	   // 4.26.1 and earlier is missing fixes necessary for this feature to work.
-		}
-
-		IModularFeatures::Get().RegisterModularFeature(GetModularFeatureName(), this);
+		// Secondary view feature can trigger engine bug in 5.0 so this plugin is disabled until it is fixed.
+		// IModularFeatures::Get().RegisterModularFeature(GetModularFeatureName(), this);
 	}
 
 	void FSecondaryViewConfigurationPlugin::Unregister()
 	{
-		IModularFeatures::Get().UnregisterModularFeature(GetModularFeatureName(), this);
+		// Secondary view feature can trigger engine bug in 5.0 so this plugin is disabled until it is fixed.
+		// IModularFeatures::Get().UnregisterModularFeature(GetModularFeatureName(), this);
 	}
 
 	bool FSecondaryViewConfigurationPlugin::GetRequiredExtensions(TArray<const ANSICHAR*>& OutExtensions)

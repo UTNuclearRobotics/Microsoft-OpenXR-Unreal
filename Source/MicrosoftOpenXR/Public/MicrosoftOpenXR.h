@@ -55,9 +55,6 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "MicrosoftOpenXR|OpenXR")
 	FOnDictationArgsAvailable OnDictationArgsAvailable;
 
-	UFUNCTION(BlueprintCallable, Category = "MicrosoftOpenXR|OpenXR")
-	static void GetMicrosoftOpenXRFunctionLibraryRef(UMicrosoftOpenXRFunctionLibrary* MircrosoftOpenXRFunctionLibraryRef);
-
 	UFUNCTION(BlueprintPure, Category = "MicrosoftOpenXR|OpenXR")
 	static FString GetSpeechDictation();
 
