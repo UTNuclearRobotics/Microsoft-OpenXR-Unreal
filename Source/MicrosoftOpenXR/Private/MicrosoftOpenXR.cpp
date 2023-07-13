@@ -25,7 +25,7 @@ DEFINE_LOG_CATEGORY(LogAOA)
 
 namespace MicrosoftOpenXR
 {
-	static class FMicrosoftOpenXRModule * g_MicrosoftOpenXRModule;
+	static class FMicrosoftOpenXRModule* g_MicrosoftOpenXRModule;
 
 	class FMicrosoftOpenXRModule : public IModuleInterface
 	{
@@ -35,16 +35,14 @@ namespace MicrosoftOpenXR
 			SpatialAnchorPlugin.Register();
 			HandMeshPlugin.Register();
 			SecondaryViewConfigurationPlugin.Register();
+			SceneUnderstandingPlugin.Register();
+			SpatialMappingPlugin.Register();
 #if PLATFORM_WINDOWS || PLATFORM_HOLOLENS
 			AzureObjectAnchorsPlugin = MakeShared<FAzureObjectAnchorsPlugin>();
 			AzureObjectAnchorsPlugin->Register();
 			QRTrackingPlugin.Register();
 			LocatableCamPlugin.Register();
 			SpeechPlugin.Register();
-			SpatialMappingPlugin.Register();
-#if !UE_VERSION_OLDER_THAN(4, 27, 1)
-			SceneUnderstandingPlugin.Register();
-#endif	  // !UE_VERSION_OLDER_THAN(4, 27, 1)
 #endif	  // PLATFORM_WINDOWS || PLATFORM_HOLOLENS
 
 #if SUPPORTS_REMOTING
@@ -66,15 +64,13 @@ namespace MicrosoftOpenXR
 			SpatialAnchorPlugin.Unregister();
 			HandMeshPlugin.Unregister();
 			SecondaryViewConfigurationPlugin.Unregister();
+			SceneUnderstandingPlugin.Unregister();
+			SpatialMappingPlugin.Unregister();
 #if PLATFORM_WINDOWS || PLATFORM_HOLOLENS
 			AzureObjectAnchorsPlugin->Unregister();
 			QRTrackingPlugin.Unregister();
 			LocatableCamPlugin.Unregister();
 			SpeechPlugin.Unregister();
-			SpatialMappingPlugin.Unregister();
-#if !UE_VERSION_OLDER_THAN(4, 27, 1)
-			SceneUnderstandingPlugin.Unregister();
-#endif	  // !UE_VERSION_OLDER_THAN(4, 27, 1)
 #endif	  // PLATFORM_WINDOWS || PLATFORM_HOLOLENS
 
 #if SUPPORTS_REMOTING
@@ -89,15 +85,13 @@ namespace MicrosoftOpenXR
 		FSecondaryViewConfigurationPlugin SecondaryViewConfigurationPlugin;
 		FHandMeshPlugin HandMeshPlugin;
 		FSpatialAnchorPlugin SpatialAnchorPlugin;
+		FSceneUnderstandingPlugin SceneUnderstandingPlugin;
+		FSpatialMappingPlugin SpatialMappingPlugin;
 #if PLATFORM_WINDOWS || PLATFORM_HOLOLENS
 		TSharedPtr<FAzureObjectAnchorsPlugin> AzureObjectAnchorsPlugin;
 		FQRTrackingPlugin QRTrackingPlugin;
 		FLocatableCamPlugin LocatableCamPlugin;
 		FSpeechPlugin SpeechPlugin;
-		FSpatialMappingPlugin SpatialMappingPlugin;
-#if !UE_VERSION_OLDER_THAN(4, 27, 1)
-		FSceneUnderstandingPlugin SceneUnderstandingPlugin;
-#endif	  // !UE_VERSION_OLDER_THAN(4, 27, 1)
 #endif	  // PLATFORM_WINDOWS || PLATFORM_HOLOLENS
 
 #if SUPPORTS_REMOTING
@@ -107,6 +101,7 @@ namespace MicrosoftOpenXR
 #if PLATFORM_HOLOLENS
 		FHolographicWindowAttachmentPlugin HolographicWindowAttachmentPlugin;
 #endif
+
 	};
 }	 // namespace MicrosoftOpenXR
 
@@ -216,14 +211,7 @@ bool UMicrosoftOpenXRFunctionLibrary::IsRemoting()
 
 bool UMicrosoftOpenXRFunctionLibrary::CanDetectPlanes()
 {
-#if UE_VERSION_OLDER_THAN(4, 27, 1)
-	// SU was introduced in 4.27.1
-	return false;
-#elif PLATFORM_WINDOWS || PLATFORM_HOLOLENS
 	return MicrosoftOpenXR::g_MicrosoftOpenXRModule->SceneUnderstandingPlugin.CanDetectPlanes();
-#endif
-
-	return false;
 }
 
 bool UMicrosoftOpenXRFunctionLibrary::ToggleAzureObjectAnchors(const bool bOnOff)
@@ -270,6 +258,17 @@ TArray<FARTraceResult> UMicrosoftOpenXRFunctionLibrary::LineTraceTrackedAzureObj
 #endif
 
 	return {};
+}
+
+void UMicrosoftOpenXRFunctionLibrary::GetMicrosoftOpenXRFunctionLibraryRef(UMicrosoftOpenXRFunctionLibrary* MircrosoftOpenXRFunctionLibraryRef)
+{
+}
+
+FString UMicrosoftOpenXRFunctionLibrary::GetSpeechDictation()
+{
+	FString test{ "Say Something!" };
+	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.GetSpeechDictation(test);
+	return test;
 }
 
 #undef LOCTEXT_NAMESPACE

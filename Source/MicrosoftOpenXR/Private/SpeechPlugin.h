@@ -53,6 +53,8 @@ namespace MicrosoftOpenXR
 		void AddKeywords(TArray<FKeywordInput> KeywordsToAdd);
 		void RemoveKeywords(TArray<FString> KeywordsToRemove);
 
+		void GetSpeechDictation(FString& Dictation); // <- add
+
 	private:
 		winrt::Windows::Media::SpeechRecognition::SpeechRecognizer SpeechRecognizer = nullptr;
 		winrt::Windows::Foundation::IAsyncOperation<winrt::Windows::Media::SpeechRecognition::SpeechRecognitionCompilationResult> CompileConstraintsAsyncOperation;
@@ -69,6 +71,9 @@ namespace MicrosoftOpenXR
 		void StopSpeechRecognizer();
 
 		XrSession Session;
+
+		FString dictation_; // <- add
+		UMicrosoftOpenXRFunctionLibrary* MicrosoftOpenXRFunctionLibRef;
 
 		// Remoting
 #if SUPPORTS_REMOTING

@@ -15,6 +15,9 @@
 // Currently remoting only supports x64 Windows: Editor and Packaged Exe
 #define SUPPORTS_REMOTING (PLATFORM_WINDOWS && PLATFORM_64BITS)
 
+//OnOnDictationArgsAvailable
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDictationArgsAvailable, FString, Dictation);
+
 USTRUCT(BlueprintType, Category = "MicrosoftOpenXR|OpenXR")
 struct FKeywordInput
 {
@@ -43,7 +46,22 @@ class MICROSOFTOPENXR_API UMicrosoftOpenXRFunctionLibrary :
 	GENERATED_BODY()
 
 public:
+	/**
+	Broadcast Dictation Results
 
+	@param dictation string
+	@return dictation string
+	*/
+	UPROPERTY(BlueprintAssignable, Category = "MicrosoftOpenXR|OpenXR")
+	FOnDictationArgsAvailable OnDictationArgsAvailable;
+
+	UFUNCTION(BlueprintCallable, Category = "MicrosoftOpenXR|OpenXR")
+	static void GetMicrosoftOpenXRFunctionLibraryRef(UMicrosoftOpenXRFunctionLibrary* MircrosoftOpenXRFunctionLibraryRef);
+
+	UFUNCTION(BlueprintPure, Category = "MicrosoftOpenXR|OpenXR")
+	static FString GetSpeechDictation();
+
+	//static MicrosoftOpenXR::FMicrosoftOpenXRModule* Get();
 	/**
 	Turn Hand Mesh
 

@@ -52,7 +52,7 @@ namespace MicrosoftOpenXR
 	{
 #if SUPPORTS_REMOTING
 		bIsRemotingSpeechExtensionEnabled =
-			IOpenXRHMDPlugin::Get().IsExtensionEnabled(XR_MSFT_HOLOGRAPHIC_REMOTING_SPEECH_EXTENSION_NAME);
+			IOpenXRHMDModule::Get().IsExtensionEnabled(XR_MSFT_HOLOGRAPHIC_REMOTING_SPEECH_EXTENSION_NAME);
 
 		if (bIsRemotingSpeechExtensionEnabled)
 		{
@@ -67,14 +67,14 @@ namespace MicrosoftOpenXR
 	const void* FSpeechPlugin::OnBeginSession(XrSession InSession, const void* InNext)
 	{
 		Session = InSession;
-
+		
 		// Add all speech keywords from the input system
 		const TArray <FInputActionSpeechMapping>& SpeechMappings = GetDefault<UInputSettings>()->GetSpeechMappings();
 		for (const FInputActionSpeechMapping& SpeechMapping : SpeechMappings)
 		{
 			FKey Key(SpeechMapping.GetKeyName());
 			FString Keyword = SpeechMapping.GetSpeechKeyword().ToString();
-			
+
 			RegisterKeyword(Key, Keyword);
 		}
 
@@ -278,10 +278,12 @@ namespace MicrosoftOpenXR
 		}
 
 		AsyncTask(ENamedThreads::GameThread, [InKey, PlayerController]()
-		{
-			PlayerController->InputKey(InKey, IE_Pressed, 1.0f, false);
+		{ 
+			FInputKeyParams key(InKey, IE_Pressed, 1.0, false);
+			PlayerController->InputKey(key);
 		});
 	}
+
 
 	void FSpeechPlugin::RegisterSpeechCommandsWithRemoting()
 	{
@@ -295,7 +297,7 @@ namespace MicrosoftOpenXR
 		const TArray <FInputActionSpeechMapping>& SpeechMappings = GetDefault<UInputSettings>()->GetSpeechMappings();
 
 		XrRemotingSpeechInitInfoMSFT remotingSpeechInfo{ (XrStructureType)XR_TYPE_REMOTING_SPEECH_INIT_INFO_MSFT };
-
+		
 		// A language string is required for remoting speech to work.
 		// Default to "en-US", but allow for additional languages in the game config.
 		FString RemotingSpeechLanguage = "en-US";
@@ -345,11 +347,15 @@ namespace MicrosoftOpenXR
 			RegisterSpeechCommandsWithRemoting();
 			return;
 		}
+		
 
-		SpeechRecognitionListConstraint constraint = SpeechRecognitionListConstraint(Keywords);
+		// removed -> //SpeechRecognitionListConstraint constraint = SpeechRecognitionListConstraint(Keywords);
+		SpeechRecognitionTopicConstraint dictationConstraint = SpeechRecognitionTopicConstraint(winrt::Windows::Media::SpeechRecognition::SpeechRecognitionScenario::Dictation, winrt::hstring(*FString("dictation"))); // <- added
 		SpeechRecognizer = winrt::Windows::Media::SpeechRecognition::SpeechRecognizer();
 		SpeechRecognizer.Constraints().Clear();
-		SpeechRecognizer.Constraints().Append(constraint);
+		// removed -> //SpeechRecognizer.Constraints().Append(constraint);
+		SpeechRecognizer.Constraints().Append(dictationConstraint); // <- added
+		
 
 		CompileConstraintsAsyncOperation = SpeechRecognizer.CompileConstraintsAsync();
 
@@ -385,6 +391,8 @@ namespace MicrosoftOpenXR
 			}
 		});
 
+		/* removed */
+		/*
 		ResultsGeneratedToken = SpeechRecognizer.ContinuousRecognitionSession().ResultGenerated(
 			[&](SpeechContinuousRecognitionSession sender, SpeechContinuousRecognitionResultGeneratedEventArgs args)
 		{
@@ -392,9 +400,25 @@ namespace MicrosoftOpenXR
 				args.Result().Confidence() != SpeechRecognitionConfidence::Rejected)
 			{
 				FString keyword = FString(args.Result().Text().c_str());
+				UE_LOG(LogHMD, Warning, TEXT("Hello World!!!!!!!!!!!!!!!!!"));
+				UE_LOG(LogHMD, Warning, TEXT("ResultsGenerated args results: %s"), *keyword);
 				CallSpeechCallback(KeywordMap.FindRef(keyword));
 			}
-		});
+		});*/
+
+		/* added */
+		ResultsGeneratedToken = SpeechRecognizer.ContinuousRecognitionSession().ResultGenerated(
+			[&](SpeechContinuousRecognitionSession sender, SpeechContinuousRecognitionResultGeneratedEventArgs args)
+			{
+				if (args.Result().Confidence() == SpeechRecognitionConfidence::Medium ||
+					args.Result().Confidence() == SpeechRecognitionConfidence::High)
+				{
+					dictation_ = FString(args.Result().Text().c_str());
+					UE_LOG(LogHMD, Warning, TEXT("Speech Recognized Results Generated: %s"), *dictation_);
+
+				}
+			});
+
 	}
 
 	void FSpeechPlugin::StopSpeechRecognizer()
@@ -456,6 +480,12 @@ namespace MicrosoftOpenXR
 				}
 			}
 		}
+	}
+
+	void FSpeechPlugin::GetSpeechDictation(FString& Dictation)
+	{
+		Dictation = dictation_;
+		
 	}
 }	 // namespace MicrosoftOpenXR
 
