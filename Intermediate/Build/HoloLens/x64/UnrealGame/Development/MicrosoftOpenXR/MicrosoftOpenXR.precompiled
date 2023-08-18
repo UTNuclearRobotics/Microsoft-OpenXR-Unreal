@@ -1,0 +1,25 @@
+{
+	"OutputFiles": [
+		"PCH.MicrosoftOpenXR.h.obj",
+		"AzureObjectAnchorTypes.gen.cpp.obj",
+		"MicrosoftOpenXR.gen.cpp.obj",
+		"MicrosoftOpenXR.init.gen.cpp.obj",
+		"OpenXRCameraImageTexture.gen.cpp.obj",
+		"AzureObjectAnchorsPlugin.cpp.obj",
+		"HandMeshPlugin.cpp.obj",
+		"HolographicRemotingPlugin.cpp.obj",
+		"HolographicWindowAttachmentPlugin.cpp.obj",
+		"LocatableCamPlugin.cpp.obj",
+		"MicrosoftOpenXR.cpp.obj",
+		"OpenXRCameraImageTexture.cpp.obj",
+		"OpenXRCommon.cpp.obj",
+		"QRTrackingPlugin.cpp.obj",
+		"SceneUnderstandingBase.cpp.obj",
+		"SceneUnderstandingPlugin.cpp.obj",
+		"SecondaryViewConfiguration.cpp.obj",
+		"SpatialAnchorPlugin.cpp.obj",
+		"SpatialMappingPlugin.cpp.obj",
+		"SpeechPlugin.cpp.obj",
+		"TrackedGeometryCollision.cpp.obj"
+	]
+}

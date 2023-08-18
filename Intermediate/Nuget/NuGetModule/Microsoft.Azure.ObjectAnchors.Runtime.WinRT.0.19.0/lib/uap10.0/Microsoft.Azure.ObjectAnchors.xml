@@ -1,0 +1,200 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        "Microsoft.Azure.ObjectAnchors"
+    </assembly>
+    <members>
+        <member name="F:aoa_object_instance_state_.scale_change">
+Scale changes applied to object model in centered coordinate system.
+
+</member>
+        <member name="F:aoa_object_instance_state_.center">
+Center of this object instance in the coordinate frame of a spatial graph node.
+
+</member>
+        <member name="F:aoa_object_instance_state_.surface_coverage">
+Percentage of surface on object model that matches to real object at current pose, from 0 to 1. The higher the better.
+
+</member>
+        <member name="F:aoa_object_instance_state_.last_updated_time">
+Last updated time.
+
+</member>
+        <member name="T:aoa_object_instance_state_">
+State of an object instance.
+
+</member>
+        <member name="F:aoa_object_control_point_.model_coordinate">
+Position and orientation of the model coordinate that should be placed at the control point's location.
+
+</member>
+        <member name="F:aoa_object_control_point_.location">
+Location of the control point relative to a static node in the Spatial Graph.
+
+</member>
+        <member name="T:aoa_object_control_point_">
+Defines a "control point" that maps a location in the Spatial Graph to the model coordinate which should be placed there. A control point's accuracy is biased to the Spatial Graph node it is anchored to, so when rendering content relative to the object, control points bound to static nodes that are near the user should be given greater weight.
+
+</member>
+        <member name="F:aoa_spatial_graph_location_.orientation">
+Orientation in the coordinate frame of spatial graph node.
+
+</member>
+        <member name="F:aoa_spatial_graph_location_.position">
+Position in the coordinate frame of spatial graph node.
+
+</member>
+        <member name="F:aoa_spatial_graph_location_.node_id">
+Spatial graph node id.
+
+</member>
+        <member name="T:aoa_spatial_graph_location_">
+Location w.r.t a spatial graph node.
+
+</member>
+        <member name="F:aoa_spatial_field_of_view_.aspect_ratio">
+Aspect ratio between width and height dimensions.
+
+</member>
+        <member name="F:aoa_spatial_field_of_view_.horizontal_field_of_view_in_degrees">
+Horizontal field of view in degrees.
+
+</member>
+        <member name="F:aoa_spatial_field_of_view_.far_distance">
+Far plane distance.
+
+</member>
+        <member name="F:aoa_spatial_field_of_view_.orientation">
+View's orientation.
+
+</member>
+        <member name="F:aoa_spatial_field_of_view_.position">
+View's position.
+
+</member>
+        <member name="T:aoa_spatial_field_of_view_">
+Oriented field of view.
+
+</member>
+        <member name="F:aoa_spatial_oriented_box_.orientation">
+Orientation.
+
+</member>
+        <member name="F:aoa_spatial_oriented_box_.extents">
+Edge-to-edge length along each dimension.
+
+</member>
+        <member name="F:aoa_spatial_oriented_box_.center">
+Center.
+
+</member>
+        <member name="T:aoa_spatial_oriented_box_">
+Oriented bounding box.
+
+</member>
+        <member name="F:aoa_spatial_sphere_.radius">
+Radius of the sphere.
+
+</member>
+        <member name="F:aoa_spatial_sphere_.center">
+Center of the sphere.
+
+</member>
+        <member name="T:aoa_spatial_sphere_">
+Sphere
+
+</member>
+        <member name="F:aoa_spatial_graph_coordinate_system_.coordinate_system_to_node_transform">
+Relative pose from this coordinate system to the coordinate frame of spatial graph node.
+
+</member>
+        <member name="F:aoa_spatial_graph_coordinate_system_.node_id">
+Spatial graph node id.
+
+</member>
+        <member name="T:aoa_spatial_graph_coordinate_system_">
+Coordinate system used in Object Anchors. It specifies a spatial graph node id and a relative pose from itself to the coordinate system of that spatial graph node.
+
+</member>
+        <member name="F:aoa_spatial_pose_.orientation">
+The orientation of the pose.
+
+</member>
+        <member name="F:aoa_spatial_pose_.position">
+The position of the pose.
+
+</member>
+        <member name="T:aoa_spatial_pose_">
+Pose
+
+</member>
+        <member name="F:aoa_status_key_not_found">
+The key does not exist in the collection.
+
+</member>
+        <member name="F:aoa_status_operation_canceled">
+The operation was canceled.
+
+</member>
+        <member name="F:aoa_status_not_implemented">
+Not implemented.
+
+</member>
+        <member name="F:aoa_status_out_of_range">
+The value is out of range.
+
+</member>
+        <member name="F:aoa_status_invalid_argument">
+Invalid argument.
+
+</member>
+        <member name="F:aoa_status_out_of_memory">
+Out of memory.
+
+</member>
+        <member name="F:aoa_status_object_disposed">
+Cannot access a disposed object.
+
+</member>
+        <member name="F:aoa_status_failed">
+Failed
+
+</member>
+        <member name="F:aoa_status_ok">
+Success
+
+</member>
+        <member name="T:aoa_object_observer_access_status_">
+Access status.
+
+</member>
+        <member name="T:aoa_object_observation_mode_">
+Specifies how the environment should be observed to detect objects. Ambient observation relies on information about the environment that has been gathered by the system automatically as the user uses the device. This can result in quicker detection initially since the environment may already be scanned. However it may also contain stale data which can lead to poorer quality results. It is also limited to a standard resolution and area determined by the system, rather than tailored to the model. Active observation creates a fresh scan of the environment that is optimized for the model being detected. This avoids any problems with stale data, but requires the user to take some time to scan the environment before the object can be detected. Observations will continue to be accumulated until the query object is disposed, so re-using a query for multiple detections may produce quicker results.
+
+</member>
+        <member name="T:aoa_object_instance_tracking_mode_">
+Tracking mode applied on an object instance.
+
+</member>
+        <member name="F:aoa_object_instance_tracking_mode_high_latency_accurate_position">
+Track with high latency and expect accurate 6-Dof pose.
+
+</member>
+        <member name="F:aoa_object_instance_tracking_mode_low_latency_coarse_position">
+Track with low latency and expect coarse 6-Dof pose.
+
+</member>
+        <member name="F:aoa_object_instance_tracking_mode_paused">
+Pause tracking.
+
+</member>
+        <member name="T:aoa_object_diagnostics_upload_status_">
+Status of diagnostics uploading task.
+
+</member>
+        <member name="T:aoa_environment_observation_topology_">
+Specifies the desired topology for an environment observation. Requesting a triangle mesh requires additional time and resources versus a point cloud.
+
+</member>
+    </members>
+</doc>

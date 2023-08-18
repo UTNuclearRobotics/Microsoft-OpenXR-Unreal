@@ -1,0 +1,11 @@
+{
+	"BuildId": "23058290",
+	"Modules": 
+	{
+		"AzureSpatialAnchorsForOpenXR": "UnrealEditor-AzureSpatialAnchorsForOpenXR.dll",
+		"MicrosoftOpenXR": "UnrealEditor-MicrosoftOpenXR.dll",
+		"MicrosoftOpenXREditor": "UnrealEditor-MicrosoftOpenXREditor.dll",
+		"MicrosoftOpenXRRuntimeSettings": "UnrealEditor-MicrosoftOpenXRRuntimeSettings.dll",
+		"NuGetModule": "UnrealEditor-NuGetModule.dll"
+	}
+}

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <AzureObjectAnchorsRuntimeWinRT-Platform>$(PlatformTarget)</AzureObjectAnchorsRuntimeWinRT-Platform>
+    <AzureObjectAnchorsRuntimeWinRT-Platform Condition="'$(PlatformTarget.ToLower())' == 'win32'">x86</AzureObjectAnchorsRuntimeWinRT-Platform>
+
+    <AzureObjectAnchorsRuntimeWinRT-PlatformRuntimePath>$(AzureObjectAnchorsRuntimeWinRT-PackagePath)runtimes/win10-$(AzureObjectAnchorsRuntimeWinRT-Platform)/native/</AzureObjectAnchorsRuntimeWinRT-PlatformRuntimePath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="$(AzureObjectAnchorsRuntimeWinRT-PackagePath)lib/uap10.0/Microsoft.Azure.ObjectAnchors.winmd">
+      <Implementation>Microsoft.Azure.ObjectAnchors.dll</Implementation>
+    </Reference>
+    <ReferenceCopyLocalPaths Include="$(AzureObjectAnchorsRuntimeWinRT-PlatformRuntimePath)Microsoft.Azure.ObjectAnchors.dll" />
+    <ReferenceCopyLocalPaths Include="$(AzureObjectAnchorsRuntimeWinRT-PlatformRuntimePath)ObjectTrackerApi.dll" />
+    <ReferenceCopyLocalPaths Include="$(AzureObjectAnchorsRuntimeWinRT-PlatformRuntimePath)ObjectTrackerDiagnostics.dll" />
+    <ReferenceCopyLocalPaths Include="$(AzureObjectAnchorsRuntimeWinRT-PlatformRuntimePath)ObjectTrackerFusion.dll" />
+    <ReferenceCopyLocalPaths Include="$(AzureObjectAnchorsRuntimeWinRT-PlatformRuntimePath)ObjectTrackerRefinement.dll" />
+    <ReferenceCopyLocalPaths Include="$(AzureObjectAnchorsRuntimeWinRT-PlatformRuntimePath)VolumeFusionAPI.dll" />
+  </ItemGroup>
+</Project>
