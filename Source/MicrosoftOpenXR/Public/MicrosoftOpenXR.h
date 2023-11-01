@@ -59,19 +59,29 @@ public:
 	static FString GetSpeechDictation();
 
 	UFUNCTION(BlueprintCallable, Category = "MicrosoftOpenXR|OpenXR")
-	static void GetAllDevices();
+	static void GetAllIntegratedDevices();
 
 	UFUNCTION(BlueprintCallable, Category = "MicrosoftOpenXR|OpenXR")
-	static void GetConnectedAudioDevices();
+	static void GetIntegratedAudioDevices();
 
 	UFUNCTION(BlueprintCallable, Category = "MicrosoftOpenXR|OpenXR")
-	static void StartAudioCapture();
+	static void InitRawAudioCaptureMCa();
 
 	UFUNCTION(BlueprintCallable, Category = "MicrosoftOpenXR|OpenXR")
-	static void InitializeAudioAsyncCapture();
+	static void InitRawAudioCaptureMCb();
 
 	UFUNCTION(BlueprintCallable, Category = "MicrosoftOpenXR|OpenXR")
-	static void CreateAudioGraph();
+	static void InitRawAudioCaptureAG();
+
+	UFUNCTION(BlueprintCallable, Category = "MicrosoftOpenXR|OpenXR")
+	static void StartRawAudioCapture();
+
+	UFUNCTION(BlueprintCallable, Category = "MicrosoftOpenXR|OpenXR")
+	static void StopRawAudioCapture();
+
+	UFUNCTION(BlueprintCallable, Category = "MicrosoftOpenXR|OpenXR")
+	static void GetRawAudioData();
+
 
 	//static MicrosoftOpenXR::FMicrosoftOpenXRModule* Get();
 	/**

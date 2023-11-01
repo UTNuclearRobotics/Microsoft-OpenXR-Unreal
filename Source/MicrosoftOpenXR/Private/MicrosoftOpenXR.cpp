@@ -272,30 +272,46 @@ FString UMicrosoftOpenXRFunctionLibrary::GetSpeechDictation()
 	return test;
 }
 
-void UMicrosoftOpenXRFunctionLibrary::GetAllDevices()
+void UMicrosoftOpenXRFunctionLibrary::GetAllIntegratedDevices()
 {
-	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.GetAllDevices();
+	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.GetAllIntegratedDevices();
 }
 
-void UMicrosoftOpenXRFunctionLibrary::GetConnectedAudioDevices()
+void UMicrosoftOpenXRFunctionLibrary::GetIntegratedAudioDevices()
 {
-	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.GetConnectedAudioDevices();
+	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.GetIntegratedAudioDevices();
 }
 
-void UMicrosoftOpenXRFunctionLibrary::StartAudioCapture()
+void UMicrosoftOpenXRFunctionLibrary::InitRawAudioCaptureMCa()
 {
-	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.StartAudioCapture();
+	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.InitRawAudioCaptureMCa();
 }
 
-void UMicrosoftOpenXRFunctionLibrary::InitializeAudioAsyncCapture()
+void UMicrosoftOpenXRFunctionLibrary::InitRawAudioCaptureMCb()
 {
-	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.InitializeAudioAsyncCapture();
+	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.InitRawAudioCaptureMCb();
 }
 
-void UMicrosoftOpenXRFunctionLibrary::CreateAudioGraph()
+void UMicrosoftOpenXRFunctionLibrary::InitRawAudioCaptureAG()
 {
-	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.CreateAudioGraph();
+	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.InitRawAudioCaptureAG();
 }
+
+void UMicrosoftOpenXRFunctionLibrary::StartRawAudioCapture()
+{
+	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.StartRawAudioCapture();
+}
+
+void UMicrosoftOpenXRFunctionLibrary::StopRawAudioCapture()
+{
+	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.StopRawAudioCapture();
+}
+
+void UMicrosoftOpenXRFunctionLibrary::GetRawAudioData()
+{
+	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.GetRawAudioData();
+}
+
 
 #undef LOCTEXT_NAMESPACE
 

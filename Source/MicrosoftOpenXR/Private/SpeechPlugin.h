@@ -39,6 +39,7 @@
 #include <winrt/Windows.Media.MediaProperties.h>
 #include <winrt/Windows.Media.Capture.Frames.h>
 #include <winrt/Windows.Storage.Streams.h>
+#include <winrt/Windows.Media.SpeechSynthesis.h>
 
 #include "Windows/PostWindowsApi.h"
 #include "Windows/HideWindowsPlatformAtomics.h"
@@ -52,7 +53,7 @@
 namespace MicrosoftOpenXR
 {
 
-
+	// this is used to create audio
 	struct __declspec(uuid("5B0D3235-4DBA-4D44-865E-8F1D0E4FD04D")) __declspec(novtable) IMemoryBufferByteAccess : ::IUnknown
 	{
 		virtual HRESULT __stdcall GetBuffer(std::uint8_t** value, std::uint32_t* capacity) = 0;
@@ -73,23 +74,19 @@ namespace MicrosoftOpenXR
 		void AddKeywords(TArray<FKeywordInput> KeywordsToAdd);
 		void RemoveKeywords(TArray<FString> KeywordsToRemove);
 
-		void GetSpeechDictation(FString& Dictation); // <- add
-
-		void StartAudioCapture();
-
-		void GetAllDevices();
-
-		void GetConnectedAudioDevices();
-
-		void InitializeAudioAsyncCapture();
-
-		void CreateAudioGraph();
-
-		void DeviceAdded(winrt::Windows::Devices::Enumeration::DeviceWatcher const&, 
-			             winrt::Windows::Devices::Enumeration::DeviceInformation const& addedDevice);
+		/*
+		 * Added Public Functions for Continuous Speech Dictation & Raw Audio Capture 
+		 */
+		void GetSpeechDictation(FString& Dictation); // exposed to MicrosoftOpenXR as a (Blueprintable function)
+		void GetAllIntegratedDevices();              // gets name and id of all integrated devices
+		void GetIntegratedAudioDevices();            // gets all connected audio based devices like a microphone (Blueprintable function)
+		void InitRawAudioCaptureMCa();               // raw audio capture using MediaCapture approach (not currently used)
+		void InitRawAudioCaptureMCb();               // raw audio capture using MediaCapture approach (not currently used)
+		void InitRawAudioCaptureAG();				 // raw audio capture using AudioGraph approach 
+		void StartRawAudioCapture();
+		void StopRawAudioCapture();
+		void GetRawAudioData();
 		
-		//winrt::Windows::Foundation::IAsyncOperation<winrt::Windows::Devices::Enumeration::DeviceInformation> FindMicrophoneAsync();
-		//void FindMicrophoneAsync();
 	private:
 		winrt::Windows::Media::SpeechRecognition::SpeechRecognizer SpeechRecognizer = nullptr;
 		winrt::Windows::Foundation::IAsyncOperation<winrt::Windows::Media::SpeechRecognition::SpeechRecognitionCompilationResult> CompileConstraintsAsyncOperation;
@@ -97,12 +94,6 @@ namespace MicrosoftOpenXR
 		winrt::event_token ResultsGeneratedToken;
 		std::vector<winrt::hstring> Keywords;
 		TMap<FString, FKey> KeywordMap;
-
-		// Define a member variable for the audio capture.
-		winrt::Windows::Media::Capture::MediaCapture audio_mediaCapture{ nullptr };
-		winrt::Windows::Media::Capture::MediaCaptureInitializationSettings audio_initSettings{ nullptr };
-		winrt::Windows::Foundation::IAsyncInfo AsyncInfo;
-		// May need to start an Async: winrt::Windows::Foundation::IAsyncOperation<winrt::Windows::Media::Capture::MediaCapture::
 
 		APlayerController* GetPlayerController();
 
@@ -113,7 +104,31 @@ namespace MicrosoftOpenXR
 
 		XrSession Session;
 
-		FString dictation_; // <- add
+		/*
+		 * Added Private Functions for Continuous Speech Dictation & Raw Audio Capture
+		 */
+		FString dictation_;
+
+		// audio graph implementation
+		winrt::Windows::Media::Audio::AudioGraph MicrophoneAudioGraph{ nullptr };
+		winrt::Windows::Foundation::IAsyncOperation<winrt::Windows::Media::Audio::CreateAudioGraphResult> CreateAudioGraphAsyncOperation{ nullptr };
+		winrt::Windows::Media::Audio::CreateAudioGraphResult CreateAudioGraphAsyncResult{ nullptr };
+		winrt::Windows::Media::Audio::AudioFrameOutputNode AudioOutputNode{ nullptr };
+
+		winrt::Windows::Foundation::IAsyncOperation<winrt::Windows::Media::Audio::CreateAudioDeviceInputNodeResult> CreateAudioDeviceInputNodeOperation{ nullptr };
+		winrt::Windows::Media::Audio::CreateAudioDeviceInputNodeResult CreateAudioDeviceInputNodeAsyncResult{ nullptr };
+		winrt::Windows::Media::Audio::AudioDeviceInputNode AudioInputNode{ nullptr };
+
+
+		// Define a member variable for the audio capture.
+		winrt::Windows::Media::Capture::MediaCapture audio_mediaCapture{ nullptr };
+		winrt::Windows::Media::Capture::MediaCaptureInitializationSettings audio_initSettings{ nullptr };
+		winrt::Windows::Foundation::IAsyncInfo AsyncInfo;
+		// May need to start an Async: winrt::Windows::Foundation::IAsyncOperation<winrt::Windows::Media::Capture::MediaCapture::
+
+		// callback used for GetAllDevices(). Called when an integrated device is identified.
+		void DeviceAdded(winrt::Windows::Devices::Enumeration::DeviceWatcher const&,
+			winrt::Windows::Devices::Enumeration::DeviceInformation const& addedDevice);
 
 		/** Controls access to our references */
 		mutable std::recursive_mutex RefsLock;
@@ -129,6 +144,7 @@ namespace MicrosoftOpenXR
 		winrt::Windows::Devices::Enumeration::DeviceWatcher HoloLensDeviceWatcher = nullptr;
 
 		std::uint64_t outputSampleCount = 0U;
+
 		void frameInputQuantumStarted(
 			const winrt::Windows::Media::Audio::AudioFrameInputNode&, 
 			const winrt::Windows::Media::Audio::FrameInputNodeQuantumStartedEventArgs&);
