@@ -39,7 +39,6 @@
 #include <winrt/Windows.Media.MediaProperties.h>
 #include <winrt/Windows.Media.Capture.Frames.h>
 #include <winrt/Windows.Storage.Streams.h>
-#include <winrt/Windows.Media.SpeechSynthesis.h>
 
 #include "Windows/PostWindowsApi.h"
 #include "Windows/HideWindowsPlatformAtomics.h"
@@ -86,6 +85,7 @@ namespace MicrosoftOpenXR
 		void StartRawAudioCapture();
 		void StopRawAudioCapture();
 		void GetRawAudioData();
+		void GetAudioGraphEncodingProperties();
 		
 	private:
 		winrt::Windows::Media::SpeechRecognition::SpeechRecognizer SpeechRecognizer = nullptr;

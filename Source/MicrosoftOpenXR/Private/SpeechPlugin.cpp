@@ -94,169 +94,108 @@ namespace MicrosoftOpenXR
 	 */
 	void FSpeechPlugin::InitRawAudioCaptureAG()
 	{
-		// [GRAPH] create an audio graph object
+		// AudioGraph creation.
 		AudioGraphSettings settings(winrt::Windows::Media::Render::AudioRenderCategory::Media);
-		/*settings.PrimaryRenderDevice = */
+		settings.EncodingProperties().CreateMp3(44100, 2, 12288000); // <- this is not sticking :(
 		CreateAudioGraphAsyncOperation = AudioGraph::CreateAsync(settings);
 		CreateAudioGraphAsyncResult = CreateAudioGraphAsyncOperation.get();
 
-		if (CreateAudioGraphAsyncResult.Status() != decltype(CreateAudioGraphAsyncResult.Status())::Success)  //The state itself is a restricted enumeration type, we don't care about the specific type name, and the type name is long, so we use decltype for type derivation.
+		// Check
+		if (CreateAudioGraphAsyncResult.Status() != decltype(CreateAudioGraphAsyncResult.Status())::Success)  
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Building audio graph was not a success"));
+			UE_LOG(LogTemp, Warning, TEXT("Creating an audio graph "));
 			return;
 		}
 
+		// Declare AudioGraph object
 		MicrophoneAudioGraph = CreateAudioGraphAsyncResult.Graph();
-		UE_LOG(LogTemp, Warning, TEXT("Initialized Audio Graph"));
 
-		/* [OUTPUT]
-		 * Create an object that outputs an audio signal to an audio device.
-		 */
+		// OutputNode creation. Create an object that outputs an audio signal to an audio device.
 		AudioOutputNode = MicrophoneAudioGraph.CreateFrameOutputNode();
-		UE_LOG(LogTemp, Warning, TEXT("Built OUTPUT Node"));
 
-		/* [INPUT]
-		 * Create an object that reads an audio signal from an audio device.
-		 */
-		CreateAudioDeviceInputNodeOperation = MicrophoneAudioGraph.CreateDeviceInputNodeAsync(winrt::Windows::Media::Capture::MediaCategory::Media); //TODO: Potentially use other Field: https://learn.microsoft.com/en-us/uwp/api/windows.media.capture.mediacategory?view=winrt-22621
-		UE_LOG(LogTemp, Warning, TEXT("CreateDeviceInputNodeAsync [DONE]"));
+		// InputNode creation. Create an object that reads an audio signal from an audio device.
+		// TODO: Potentially use other Field: 
+		// ref:  https://learn.microsoft.com/en-us/uwp/api/windows.media.capture.mediacategory?view=winrt-22621
+		CreateAudioDeviceInputNodeOperation = MicrophoneAudioGraph.CreateDeviceInputNodeAsync(
+			winrt::Windows::Media::Capture::MediaCategory::Media);
 		
-		CreateAudioDeviceInputNodeOperation.Completed([this](winrt::Windows::Foundation::IAsyncOperation<winrt::Windows::Media::Audio::CreateAudioDeviceInputNodeResult> const& results, auto&& arvg)
+		// CallBack when AudioDevice is found from async operation
+		CreateAudioDeviceInputNodeOperation.Completed([this](
+			winrt::Windows::Foundation::IAsyncOperation<winrt::Windows::Media::Audio::CreateAudioDeviceInputNodeResult> const& results, 
+			auto&& async_status)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Entered LAMBDA FUNCTION [DONE]"));
-
-				if (results.get().Status() == winrt::Windows::Media::Audio::AudioDeviceNodeCreationStatus::AccessDenied)
+				// check
+				if (results.get().Status() != winrt::Windows::Media::Audio::AudioDeviceNodeCreationStatus::Success)
 				{
-					UE_LOG(LogTemp, Warning, TEXT("Building audio input node was not a success"));
-					return;
-				}
-				else if (results.get().Status() == winrt::Windows::Media::Audio::AudioDeviceNodeCreationStatus::DeviceNotAvailable)
-				{
-					UE_LOG(LogTemp, Warning, TEXT("Device Not Available"));
-					return;
-				}
-				else if (results.get().Status() == winrt::Windows::Media::Audio::AudioDeviceNodeCreationStatus::FormatNotSupported)
-				{
-					UE_LOG(LogTemp, Warning, TEXT("Format Not Supported"));
-					return;
-				}
-				else if (results.get().Status() == winrt::Windows::Media::Audio::AudioDeviceNodeCreationStatus::Success)
-				{
-					UE_LOG(LogTemp, Warning, TEXT("Success"));
-				}
-				else if (results.get().Status() == winrt::Windows::Media::Audio::AudioDeviceNodeCreationStatus::UnknownFailure)
-				{
-					UE_LOG(LogTemp, Warning, TEXT("Unknown Failure"));
-					return;
-				}
-				else
-				{
-					UE_LOG(LogTemp, Warning, TEXT("WTF"));
+					UE_LOG(LogTemp, Warning, TEXT("failure attempting to access audio input device"));
 					return;
 				}
 
+				// Create audio input node for graph and start capturing the audio
 				AudioInputNode = results.get().DeviceInputNode();
-				UE_LOG(LogTemp, Warning, TEXT("Device Input Node Created"));
-				//winrt::Windows::Devices::Enumeration::DeviceInformation device_info = input.Device(); // <- Cant get this to work.
 				AudioInputNode.AddOutgoingConnection(AudioOutputNode);
-				UE_LOG(LogTemp, Warning, TEXT("Built INPUT Node"));
 				StartRawAudioCapture();
+
+				// Print out audio device that is being used for node.
+				//winrt::Windows::Devices::Enumeration::DeviceInformation device_info = input.Device(); // <- Cant get this to work.
 			});
-		//CreateAudioDeviceInputNodeAsyncResult = CreateAudioDeviceInputNodeOperation.get();
-		//UE_LOG(LogTemp, Warning, TEXT("CreateAudioDeviceInputNodeAsyncResult [DONE]"));
-
-		
-		/*if (CreateAudioDeviceInputNodeAsyncResult.Status() == winrt::Windows::Media::Audio::AudioDeviceNodeCreationStatus::AccessDenied)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Building audio input node was not a success"));
-			return;
-		}
-		else if (CreateAudioDeviceInputNodeAsyncResult.Status() == winrt::Windows::Media::Audio::AudioDeviceNodeCreationStatus::DeviceNotAvailable)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Device Not Available"));
-			return;
-		}
-		else if (CreateAudioDeviceInputNodeAsyncResult.Status() == winrt::Windows::Media::Audio::AudioDeviceNodeCreationStatus::FormatNotSupported)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Format Not Supported"));
-			return;
-		}
-		else if (CreateAudioDeviceInputNodeAsyncResult.Status() == winrt::Windows::Media::Audio::AudioDeviceNodeCreationStatus::Success)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Success"));
-		}
-		else if (CreateAudioDeviceInputNodeAsyncResult.Status() == winrt::Windows::Media::Audio::AudioDeviceNodeCreationStatus::UnknownFailure)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Unknown Failure"));
-			return;
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("WTF"));
-			return;
-		}*/
-
-		//AudioInputNode = CreateAudioDeviceInputNodeAsyncResult.DeviceInputNode();
-		//UE_LOG(LogTemp, Warning, TEXT("Device Input Node Created"));
-		//winrt::Windows::Devices::Enumeration::DeviceInformation device_info = input.Device(); // <- Cant get this to work.
-		//AudioInputNode.AddOutgoingConnection(AudioOutputNode);
-		//UE_LOG(LogTemp, Warning, TEXT("Built INPUT Node"));
 	}
 
 	void FSpeechPlugin::StartRawAudioCapture()
 	{
-		/* [STARTUP GRAPH]
-		 *
-		 */
-		MicrophoneAudioGraph.Start();
-		UE_LOG(LogTemp, Warning, TEXT("Audio Graph Started"));
-		AudioInputNode.Start();
-		UE_LOG(LogTemp, Warning, TEXT("Started Graph"));
-		//std::this_thread::sleep_for(std::chrono::seconds(1));
-		// Call back
+		MicrophoneAudioGraph.Start(); // first start graph
+		AudioInputNode.Start();       // next start input node
+		GetAudioGraphEncodingProperties();
+		// std::this_thread::sleep_for(std::chrono::seconds(1));
+		// Audio Graph CallBack
+		// 
 		//MicrophoneAudioGraph.QuantumStarted([this](auto&& sender, auto&& args)
 		//	{
 		//		//UE_LOG(LogTemp, Warning, TEXT("Working"));
 		//		GetRawAudioData();
 		//	});
-
 	}
 
 	void FSpeechPlugin::GetRawAudioData()
 	{
-		/* [PROCESS AUDIO DATA]
-		 *
-		 */
-		UE_LOG(LogTemp, Warning, TEXT("Analyzing"));
+		// init
 		winrt::Windows::Media::AudioFrame audio_frame = AudioOutputNode.GetFrame();
-		winrt::Windows::Media::AudioBuffer buffer = audio_frame.LockBuffer(winrt::Windows::Media::AudioBufferAccessMode::Read);
+		winrt::Windows::Media::AudioBuffer buffer = audio_frame.LockBuffer(
+			winrt::Windows::Media::AudioBufferAccessMode::Read);
+		winrt::Windows::Foundation::IMemoryBufferReference reference = buffer.CreateReference(); // ref: https://learn.microsoft.com/en-us/uwp/api/windows.media.audiobuffer.createreference?view=winrt-22621#windows-media-audiobuffer-createreference
+		std::uint8_t* dataInBytes = nullptr; 
+		std::uint32_t capacityInBytes = 0U;
 
-		winrt::hstring frame_type = audio_frame.Type();
 		winrt::Windows::Foundation::IReference<winrt::Windows::Foundation::TimeSpan> dur = audio_frame.Duration();
 		winrt::Windows::Foundation::IReference<winrt::Windows::Foundation::TimeSpan> sys_timestamp = audio_frame.SystemRelativeTime();
-		UE_LOG(LogTemp, Warning, TEXT("Type: %s"), frame_type.c_str());
-		UE_LOG(LogTemp, Warning, TEXT("Buffer Length: %d"), buffer.Length());
 
-		winrt::Windows::Foundation::IMemoryBufferReference reference = buffer.CreateReference(); // information: https://learn.microsoft.com/en-us/uwp/api/windows.media.audiobuffer.createreference?view=winrt-22621#windows-media-audiobuffer-createreference
-		std::uint8_t* dataInBytes = nullptr;
-		std::uint32_t capacityInBytes = 0U;
 		auto byteAccess = reference.as<IMemoryBufferByteAccess>();
-		winrt::check_hresult(byteAccess->GetBuffer(&dataInBytes, &capacityInBytes));
+		winrt::check_hresult(byteAccess->GetBuffer(&dataInBytes, &capacityInBytes)); // fill data
 
-		for (std::uint32_t i = 0; i < 10; i++) 
+		// Print
+		for (std::uint32_t i = 0; i < 1000; i++) 
 		{
 			UE_LOG(LogTemp, Warning, TEXT("dataInBytes = %d"), dataInBytes[i]);
 		}
-
-		//UE_LOG(LogTemp, Warning, TEXT("Size of dataInBytes: %d bytes"), capacityInBytes);
+		//UE_LOG(LogTemp, Warning, TEXT("Buffer Length: %d"), buffer.Length());
+		UE_LOG(LogTemp, Warning, TEXT("Size of dataInBytes: %d bytes"), capacityInBytes);
 		//float* dataInFloat = reinterpret_cast<float*>(dataInBytes); // needed?
+	}
+
+	void FSpeechPlugin::GetAudioGraphEncodingProperties()
+	{
+		winrt::Windows::Media::MediaProperties::AudioEncodingProperties encoding_properties = AudioOutputNode.EncodingProperties();
+		UE_LOG(LogTemp, Warning, TEXT("channels: %d"), encoding_properties.ChannelCount());
+		UE_LOG(LogTemp, Warning, TEXT("sample_rate: %d Hz"), encoding_properties.SampleRate());
+		UE_LOG(LogTemp, Warning, TEXT("sample_format: %s"), encoding_properties.Type().c_str());
+		UE_LOG(LogTemp, Warning, TEXT("bitrate: %d bits/s"), encoding_properties.Bitrate());
+		UE_LOG(LogTemp, Warning, TEXT("bit depth / bits per sample: %d bits per sample"), encoding_properties.BitsPerSample());
 	}
 
 	void FSpeechPlugin::StopRawAudioCapture()
 	{
-		/* [GRAPH SHUTDOWN] */
-		AudioInputNode.Stop();
-		MicrophoneAudioGraph.Stop();
+		AudioInputNode.Stop();       // stop audio input node
+		MicrophoneAudioGraph.Stop(); // stop AudioGraph object
 		UE_LOG(LogTemp, Warning, TEXT("Stopped"));
 	}
 
