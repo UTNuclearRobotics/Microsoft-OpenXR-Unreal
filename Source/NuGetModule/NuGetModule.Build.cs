@@ -36,6 +36,7 @@ public class NuGetModule : ModuleRules
 			Directory.CreateDirectory(NugetFolder);
 
 			string BinariesSubFolder = Path.Combine("Binaries", "ThirdParty", Target.Type.ToString(), Target.Platform.ToString(), Target.Architecture);
+			Console.WriteLine("target Platform for binaries subfolder: ", Target.Platform.ToString());
 
 			PublicDefinitions.Add(string.Format("THIRDPARTY_BINARY_SUBFOLDER=\"{0}\"", BinariesSubFolder.Replace(@"\", @"\\")));
 
@@ -71,6 +72,10 @@ public class NuGetModule : ModuleRules
 
 			// get list of the installed packages, that's needed because the code should get particular versions of the installed packages
 			string[] InstalledPackages = Utils.RunLocalProcessAndReturnStdOut(NugetExe, string.Format("list -Source \"{0}\"", NugetFolder)).Split(new char[] { '\r', '\n' });
+			foreach (string pac in InstalledPackages)
+            {
+				Console.WriteLine("Installed Package: ", pac);
+            }
 
 			// winmd files of the packages
 			List<string> WinMDFiles = new List<string>();
@@ -103,8 +108,15 @@ public class NuGetModule : ModuleRules
 				string ASAFolderName = ASAPackage.Replace(" ", ".");
 
 				// copying dll and winmd binaries to our local binaries folder
-				// !!!!! please make sure that you use the path of file! Unreal can't do it for you !!!!!
+				Console.WriteLine("!!!!! please make sure that you use the path of file! Unreal can't do it for you !!!!!");
 				string WinMDFile = Path.Combine(NugetFolder, ASAFolderName, @"lib\uap10.0\Microsoft.Azure.SpatialAnchors.winmd");
+				
+				// Output paths to output
+				Console.WriteLine("WinMDFile Remote Location: " + WinMDFile);
+				Console.WriteLine("NugetFolder Remote Location: " + NugetFolder);
+				Console.WriteLine("ASAFolderName Remote Location: " + ASAFolderName);
+				Console.WriteLine("BinariesFolder Local Location: " + BinariesFolder);
+
 				SafeCopy(WinMDFile, Path.Combine(BinariesFolder, "Microsoft.Azure.SpatialAnchors.winmd"));
 
 				SafeCopy(Path.Combine(NugetFolder, ASAFolderName, string.Format(@"runtimes\win10-{0}\native\Microsoft.Azure.SpatialAnchors.dll", Target.WindowsPlatform.Architecture.ToString())),
@@ -123,12 +135,17 @@ public class NuGetModule : ModuleRules
 			}
 
 			string AOAPackage = InstalledPackages.FirstOrDefault(x => x.StartsWith("Microsoft.Azure.ObjectAnchors.Runtime.WinRT"));
+	
+			Console.WriteLine("AOAPackage Remote Location: " + AOAPackage);
+
 			if (!string.IsNullOrEmpty(AOAPackage))
 			{
 				string AOAFolderName = AOAPackage.Replace(" ", ".");
+				System.Diagnostics.Debug.WriteLine("AOAFolderName Remote Location: " + AOAFolderName);
 
 				// Copy dll and winmd binaries to our local binaries folder
 				string WinMDFile = Path.Combine(NugetFolder, AOAFolderName, @"lib\uap10.0\Microsoft.Azure.ObjectAnchors.winmd");
+				Console.WriteLine("AOAFolderName WinMDFile Remote Location: " + WinMDFile);
 				SafeCopy(WinMDFile, Path.Combine(BinariesFolder, "Microsoft.Azure.ObjectAnchors.winmd"));
 
 				String[] Binaries = {
@@ -142,8 +159,11 @@ public class NuGetModule : ModuleRules
 
 				foreach (String Binary in Binaries)
                 {
-					SafeCopy(Path.Combine(NugetFolder, AOAFolderName, string.Format(@"runtimes\win10-{0}\native\{1}", Target.WindowsPlatform.Architecture.ToString(), Binary)),
-						Path.Combine(BinariesFolder, Binary));
+					string BinaryFilePath = Path.Combine(NugetFolder, AOAFolderName, string.Format(@"runtimes\win10-{0}\native\{1}", Target.WindowsPlatform.Architecture.ToString(), Binary));
+					string BinaryRuntimeDependenciesPath = Path.Combine(BinariesFolder, Binary);
+					Console.WriteLine("BinaryFilePaths Remote Location: " + BinaryFilePath);
+					Console.WriteLine("Binary Runtime FilePaths Remote Location: " + BinaryRuntimeDependenciesPath);
+					SafeCopy(BinaryFilePath, BinaryRuntimeDependenciesPath);
 
 					RuntimeDependencies.Add(Path.Combine(BinariesFolder, Binary));
 				}

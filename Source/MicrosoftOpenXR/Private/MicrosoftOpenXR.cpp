@@ -18,6 +18,7 @@
 #include "SpatialAnchorPlugin.h"
 #include "SpatialMappingPlugin.h"
 #include "SpeechPlugin.h"
+//#include "AudioPlugin.h"
 
 DEFINE_LOG_CATEGORY(LogAOA)
 
@@ -43,6 +44,7 @@ namespace MicrosoftOpenXR
 			QRTrackingPlugin.Register();
 			LocatableCamPlugin.Register();
 			SpeechPlugin.Register();
+			//AudioPlugin.Register();
 #endif	  // PLATFORM_WINDOWS || PLATFORM_HOLOLENS
 
 #if SUPPORTS_REMOTING
@@ -71,6 +73,7 @@ namespace MicrosoftOpenXR
 			QRTrackingPlugin.Unregister();
 			LocatableCamPlugin.Unregister();
 			SpeechPlugin.Unregister();
+			//AudioPlugin.Unregister();
 #endif	  // PLATFORM_WINDOWS || PLATFORM_HOLOLENS
 
 #if SUPPORTS_REMOTING
@@ -92,6 +95,7 @@ namespace MicrosoftOpenXR
 		FQRTrackingPlugin QRTrackingPlugin;
 		FLocatableCamPlugin LocatableCamPlugin;
 		FSpeechPlugin SpeechPlugin;
+		//FAudioPlugin AudioPlugin;
 #endif	  // PLATFORM_WINDOWS || PLATFORM_HOLOLENS
 
 #if SUPPORTS_REMOTING
@@ -266,6 +270,31 @@ FString UMicrosoftOpenXRFunctionLibrary::GetSpeechDictation()
 	FString test{ "Say Something!" };
 	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.GetSpeechDictation(test);
 	return test;
+}
+
+void UMicrosoftOpenXRFunctionLibrary::GetAllDevices()
+{
+	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.GetAllDevices();
+}
+
+void UMicrosoftOpenXRFunctionLibrary::GetConnectedAudioDevices()
+{
+	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.GetConnectedAudioDevices();
+}
+
+void UMicrosoftOpenXRFunctionLibrary::StartAudioCapture()
+{
+	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.StartAudioCapture();
+}
+
+void UMicrosoftOpenXRFunctionLibrary::InitializeAudioAsyncCapture()
+{
+	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.InitializeAudioAsyncCapture();
+}
+
+void UMicrosoftOpenXRFunctionLibrary::CreateAudioGraph()
+{
+	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.CreateAudioGraph();
 }
 
 #undef LOCTEXT_NAMESPACE

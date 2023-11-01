@@ -58,6 +58,21 @@ public:
 	UFUNCTION(BlueprintPure, Category = "MicrosoftOpenXR|OpenXR")
 	static FString GetSpeechDictation();
 
+	UFUNCTION(BlueprintCallable, Category = "MicrosoftOpenXR|OpenXR")
+	static void GetAllDevices();
+
+	UFUNCTION(BlueprintCallable, Category = "MicrosoftOpenXR|OpenXR")
+	static void GetConnectedAudioDevices();
+
+	UFUNCTION(BlueprintCallable, Category = "MicrosoftOpenXR|OpenXR")
+	static void StartAudioCapture();
+
+	UFUNCTION(BlueprintCallable, Category = "MicrosoftOpenXR|OpenXR")
+	static void InitializeAudioAsyncCapture();
+
+	UFUNCTION(BlueprintCallable, Category = "MicrosoftOpenXR|OpenXR")
+	static void CreateAudioGraph();
+
 	//static MicrosoftOpenXR::FMicrosoftOpenXRModule* Get();
 	/**
 	Turn Hand Mesh
