@@ -95,8 +95,7 @@ namespace MicrosoftOpenXR
 	void FSpeechPlugin::InitRawAudioCaptureAG()
 	{
 		// AudioGraph creation.
-		AudioGraphSettings settings(winrt::Windows::Media::Render::AudioRenderCategory::Media);
-		settings.EncodingProperties().CreateMp3(44100, 2, 12288000); // <- this is not sticking :(
+		AudioGraphSettings settings(winrt::Windows::Media::Render::AudioRenderCategory::Speech);
 		CreateAudioGraphAsyncOperation = AudioGraph::CreateAsync(settings);
 		CreateAudioGraphAsyncResult = CreateAudioGraphAsyncOperation.get();
 
@@ -117,7 +116,7 @@ namespace MicrosoftOpenXR
 		// TODO: Potentially use other Field: 
 		// ref:  https://learn.microsoft.com/en-us/uwp/api/windows.media.capture.mediacategory?view=winrt-22621
 		CreateAudioDeviceInputNodeOperation = MicrophoneAudioGraph.CreateDeviceInputNodeAsync(
-			winrt::Windows::Media::Capture::MediaCategory::Media);
+			winrt::Windows::Media::Capture::MediaCategory::Speech);
 		
 		// CallBack when AudioDevice is found from async operation
 		CreateAudioDeviceInputNodeOperation.Completed([this](
@@ -139,6 +138,8 @@ namespace MicrosoftOpenXR
 				// Print out audio device that is being used for node.
 				//winrt::Windows::Devices::Enumeration::DeviceInformation device_info = input.Device(); // <- Cant get this to work.
 			});
+
+		robofleet_instance_ = FRobofleetUnrealClientModule::Get()->RobofleetClient;
 	}
 
 	void FSpeechPlugin::StartRawAudioCapture()
@@ -149,11 +150,15 @@ namespace MicrosoftOpenXR
 		// std::this_thread::sleep_for(std::chrono::seconds(1));
 		// Audio Graph CallBack
 		// 
-		//MicrophoneAudioGraph.QuantumStarted([this](auto&& sender, auto&& args)
-		//	{
-		//		//UE_LOG(LogTemp, Warning, TEXT("Working"));
-		//		GetRawAudioData();
-		//	});
+		MicrophoneAudioGraph.QuantumStarted([this](auto&& sender, auto&& args)
+			{
+				//UE_LOG(LogTemp, Warning, TEXT("Working"));
+				if (!StartAudioCapture) {
+					start_time = std::chrono::high_resolution_clock::now();
+					StartAudioCapture = true;
+				}
+				GetRawAudioData();
+			});
 	}
 
 	void FSpeechPlugin::GetRawAudioData()
@@ -172,31 +177,55 @@ namespace MicrosoftOpenXR
 		auto byteAccess = reference.as<IMemoryBufferByteAccess>();
 		winrt::check_hresult(byteAccess->GetBuffer(&dataInBytes, &capacityInBytes)); // fill data
 
-		// Print
-		for (std::uint32_t i = 0; i < 1000; i++) 
-		{
-			UE_LOG(LogTemp, Warning, TEXT("dataInBytes = %d"), dataInBytes[i]);
-		}
+		// Resize the 'data' vector to match the capacity
+		/*audio_data_stamped_.audio.data.clear();
+		audio_data_stamped_.audio.data.resize(capacityInBytes);
+		memcpy(audio_data_stamped_.audio.data.data(), dataInBytes, capacityInBytes);*/
+		audio_data_.data.clear();
+		audio_data_.data.resize(capacityInBytes);
+		memcpy(audio_data_.data.data(), dataInBytes, capacityInBytes);
+
+		FRobofleetUnrealClientModule::Get()->RobofleetClient->PublishAudioData("microphone/data", "hololens", audio_data_);
+		NumCaptures++;
+
+		//// Print
+		//for (std::uint32_t i = 0; i < 1000; i++) 
+		//{
+		//	UE_LOG(LogTemp, Warning, TEXT("dataInBytes = %d"), dataInBytes[i]);
+		//}
 		//UE_LOG(LogTemp, Warning, TEXT("Buffer Length: %d"), buffer.Length());
-		UE_LOG(LogTemp, Warning, TEXT("Size of dataInBytes: %d bytes"), capacityInBytes);
+		//UE_LOG(LogTemp, Warning, TEXT("Size of dataInBytes: %d bytes"), capacityInBytes);
 		//float* dataInFloat = reinterpret_cast<float*>(dataInBytes); // needed?
+
 	}
 
 	void FSpeechPlugin::GetAudioGraphEncodingProperties()
 	{
-		winrt::Windows::Media::MediaProperties::AudioEncodingProperties encoding_properties = AudioOutputNode.EncodingProperties();
+		winrt::Windows::Media::MediaProperties::AudioEncodingProperties encoding_properties = AudioInputNode.EncodingProperties();
 		UE_LOG(LogTemp, Warning, TEXT("channels: %d"), encoding_properties.ChannelCount());
 		UE_LOG(LogTemp, Warning, TEXT("sample_rate: %d Hz"), encoding_properties.SampleRate());
 		UE_LOG(LogTemp, Warning, TEXT("sample_format: %s"), encoding_properties.Type().c_str());
 		UE_LOG(LogTemp, Warning, TEXT("bitrate: %d bits/s"), encoding_properties.Bitrate());
 		UE_LOG(LogTemp, Warning, TEXT("bit depth / bits per sample: %d bits per sample"), encoding_properties.BitsPerSample());
+		AudioInfo audio_info;
+		audio_info.channels = encoding_properties.ChannelCount();
+		audio_info.sample_rate = encoding_properties.SampleRate();
+		audio_info.sample_format = "S32LE";
+		audio_info.bitrate = encoding_properties.Bitrate();
+		audio_info.coding_format = "wave";
+		FRobofleetUnrealClientModule::Get()->RobofleetClient->PublishAudioInfo("microphone/info", "hololens", audio_info);
 	}
 
 	void FSpeechPlugin::StopRawAudioCapture()
 	{
 		AudioInputNode.Stop();       // stop audio input node
+		stop_time = std::chrono::high_resolution_clock::now();
 		MicrophoneAudioGraph.Stop(); // stop AudioGraph object
-		UE_LOG(LogTemp, Warning, TEXT("Stopped"));
+		duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop_time - start_time);
+		float DurationInSeconds = static_cast<float>(duration.count()) / 1000.0f;
+		UE_LOG(LogTemp, Warning, TEXT("Audio Capture Stopped"));
+		UE_LOG(LogTemp, Warning, TEXT("Time elapsed: %f s"), DurationInSeconds);
+		UE_LOG(LogTemp, Warning, TEXT("Num Audio Messages: %d"), NumCaptures);
 	}
 
 	/*
@@ -379,6 +408,7 @@ namespace MicrosoftOpenXR
 		UE_LOG(LogHMD, Warning, TEXT("OnBeginSession called."));
 		Session = InSession;
 		dictation_ = FString("Say Something!");
+
 		// Add all speech keywords from the input system
 		const TArray <FInputActionSpeechMapping>& SpeechMappings = GetDefault<UInputSettings>()->GetSpeechMappings();
 		for (const FInputActionSpeechMapping& SpeechMapping : SpeechMappings)

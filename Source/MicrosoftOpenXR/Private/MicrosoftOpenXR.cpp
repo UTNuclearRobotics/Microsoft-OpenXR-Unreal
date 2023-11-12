@@ -310,6 +310,7 @@ void UMicrosoftOpenXRFunctionLibrary::StopRawAudioCapture()
 void UMicrosoftOpenXRFunctionLibrary::GetRawAudioData()
 {
 	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.GetRawAudioData();
+
 }
 
 

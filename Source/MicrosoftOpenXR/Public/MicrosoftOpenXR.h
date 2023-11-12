@@ -9,6 +9,8 @@
 #include "Components/InputComponent.h"
 
 #include "AzureObjectAnchorTypes.h"
+#include "RobofleetBPFunctionLibrary.h"
+#include "RobofleetUnrealClientModule.h"
 
 #include "MicrosoftOpenXR.generated.h"
 

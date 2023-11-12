@@ -23,6 +23,7 @@
 #include <mutex>
 #include <memory>
 #include <cstdint>
+#include <chrono>
 
 #include "Windows/AllowWindowsPlatformTypes.h"
 #include "Windows/AllowWindowsPlatformAtomics.h"
@@ -44,10 +45,17 @@
 #include "Windows/HideWindowsPlatformAtomics.h"
 #include "Windows/HideWindowsPlatformTypes.h"
 
+#include "RobofleetBPFunctionLibrary.h"
+#include "RobofleetUnrealClientModule.h"
+#include "RobofleetClientBase.h"
+#include "message_structs.h"
+
 #if SUPPORTS_REMOTING
 #include "openxr_msft_holographic_remoting.h "
 #include "openxr_msft_remoting_speech.h"
 #endif
+
+class URobofleetBase;
 
 namespace MicrosoftOpenXR
 {
@@ -148,6 +156,17 @@ namespace MicrosoftOpenXR
 		void frameInputQuantumStarted(
 			const winrt::Windows::Media::Audio::AudioFrameInputNode&, 
 			const winrt::Windows::Media::Audio::FrameInputNodeQuantumStartedEventArgs&);
+
+		// robofleet base instance
+		URobofleetBase* robofleet_instance_;
+		AudioDataStamped audio_data_stamped_;
+		AudioData audio_data_;
+
+		std::chrono::high_resolution_clock::time_point start_time;
+		std::chrono::high_resolution_clock::time_point stop_time;
+		std::chrono::milliseconds duration{ 0 };
+		bool StartAudioCapture = false;
+		int NumCaptures{ 0 };
 
 		// Remoting
 #if SUPPORTS_REMOTING

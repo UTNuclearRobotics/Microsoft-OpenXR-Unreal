@@ -56,7 +56,8 @@ public class MicrosoftOpenXR : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"NuGetModule"
+				"NuGetModule",
+				"RobofleetUnrealClient"
 			}
 		);
 
