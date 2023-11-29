@@ -18,7 +18,7 @@ using namespace winrt::Windows::Media::Capture;
 using namespace winrt::Windows::Media::Capture::Frames;
 using namespace winrt::Windows::Media::Audio;
 using namespace winrt::Windows::Media::Render;
-//using namespace winrt::Windows::Storage::Streams;
+using namespace winrt::Windows::Storage::Streams;
 
 namespace MicrosoftOpenXR
 {
@@ -110,13 +110,17 @@ namespace MicrosoftOpenXR
 		MicrophoneAudioGraph = CreateAudioGraphAsyncResult.Graph();
 
 		// OutputNode creation. Create an object that outputs an audio signal to an audio device.
-		AudioOutputNode = MicrophoneAudioGraph.CreateFrameOutputNode();
+		winrt::Windows::Media::MediaProperties::AudioEncodingProperties output_properties;
+		output_properties.SampleRate(16000);
+		AudioOutputNode = MicrophoneAudioGraph.CreateFrameOutputNode(output_properties);
 
 		// InputNode creation. Create an object that reads an audio signal from an audio device.
 		// TODO: Potentially use other Field: 
 		// ref:  https://learn.microsoft.com/en-us/uwp/api/windows.media.capture.mediacategory?view=winrt-22621
+		winrt::Windows::Media::MediaProperties::AudioEncodingProperties input_properties;
+		input_properties.SampleRate(16000);
 		CreateAudioDeviceInputNodeOperation = MicrophoneAudioGraph.CreateDeviceInputNodeAsync(
-			winrt::Windows::Media::Capture::MediaCategory::Speech);
+			winrt::Windows::Media::Capture::MediaCategory::Speech, input_properties);
 		
 		// CallBack when AudioDevice is found from async operation
 		CreateAudioDeviceInputNodeOperation.Completed([this](
@@ -153,10 +157,10 @@ namespace MicrosoftOpenXR
 		MicrophoneAudioGraph.QuantumStarted([this](auto&& sender, auto&& args)
 			{
 				//UE_LOG(LogTemp, Warning, TEXT("Working"));
-				if (!StartAudioCapture) {
+				/*if (!StartAudioCapture) {
 					start_time = std::chrono::high_resolution_clock::now();
 					StartAudioCapture = true;
-				}
+				}*/
 				GetRawAudioData();
 			});
 	}
@@ -164,38 +168,32 @@ namespace MicrosoftOpenXR
 	void FSpeechPlugin::GetRawAudioData()
 	{
 		// init
+		uint8_t* dataInBytes = nullptr;
+		uint32_t capacityInBytes = 0U;
+		
 		winrt::Windows::Media::AudioFrame audio_frame = AudioOutputNode.GetFrame();
 		winrt::Windows::Media::AudioBuffer buffer = audio_frame.LockBuffer(
 			winrt::Windows::Media::AudioBufferAccessMode::Read);
 		winrt::Windows::Foundation::IMemoryBufferReference reference = buffer.CreateReference(); // ref: https://learn.microsoft.com/en-us/uwp/api/windows.media.audiobuffer.createreference?view=winrt-22621#windows-media-audiobuffer-createreference
-		std::uint8_t* dataInBytes = nullptr; 
-		std::uint32_t capacityInBytes = 0U;
+		
+		// DEBUG: to remove
+		//winrt::Windows::Foundation::IReference<winrt::Windows::Foundation::TimeSpan> dur = audio_frame.Duration();
+		//winrt::Windows::Foundation::IReference<winrt::Windows::Foundation::TimeSpan> sys_timestamp = audio_frame.SystemRelativeTime();
 
-		winrt::Windows::Foundation::IReference<winrt::Windows::Foundation::TimeSpan> dur = audio_frame.Duration();
-		winrt::Windows::Foundation::IReference<winrt::Windows::Foundation::TimeSpan> sys_timestamp = audio_frame.SystemRelativeTime();
+		//// fill data
+		//auto byteAccess = reference.as<IMemoryBufferByteAccess>();
+		//winrt::check_hresult(byteAccess->GetBuffer(&dataInBytes, &capacityInBytes));
 
-		auto byteAccess = reference.as<IMemoryBufferByteAccess>();
-		winrt::check_hresult(byteAccess->GetBuffer(&dataInBytes, &capacityInBytes)); // fill data
+		////// fill data
+		//audio_data_.data.clear();
+		//audio_data_.data.resize(capacityInBytes);
+		//memcpy(audio_data_.data.data(), dataInBytes, capacityInBytes);
 
-		// Resize the 'data' vector to match the capacity
-		/*audio_data_stamped_.audio.data.clear();
-		audio_data_stamped_.audio.data.resize(capacityInBytes);
-		memcpy(audio_data_stamped_.audio.data.data(), dataInBytes, capacityInBytes);*/
-		audio_data_.data.clear();
-		audio_data_.data.resize(capacityInBytes);
-		memcpy(audio_data_.data.data(), dataInBytes, capacityInBytes);
+		////// publish over robofleet
+		//FRobofleetUnrealClientModule::Get()->RobofleetClient->PublishAudioData("microphone/data", "hololens", audio_data_);
 
-		FRobofleetUnrealClientModule::Get()->RobofleetClient->PublishAudioData("microphone/data", "hololens", audio_data_);
-		NumCaptures++;
-
-		//// Print
-		//for (std::uint32_t i = 0; i < 1000; i++) 
-		//{
-		//	UE_LOG(LogTemp, Warning, TEXT("dataInBytes = %d"), dataInBytes[i]);
-		//}
-		//UE_LOG(LogTemp, Warning, TEXT("Buffer Length: %d"), buffer.Length());
-		//UE_LOG(LogTemp, Warning, TEXT("Size of dataInBytes: %d bytes"), capacityInBytes);
-		//float* dataInFloat = reinterpret_cast<float*>(dataInBytes); // needed?
+		// DEBUG: to remove
+		//NumCaptures++;
 
 	}
 
@@ -207,173 +205,34 @@ namespace MicrosoftOpenXR
 		UE_LOG(LogTemp, Warning, TEXT("sample_format: %s"), encoding_properties.Type().c_str());
 		UE_LOG(LogTemp, Warning, TEXT("bitrate: %d bits/s"), encoding_properties.Bitrate());
 		UE_LOG(LogTemp, Warning, TEXT("bit depth / bits per sample: %d bits per sample"), encoding_properties.BitsPerSample());
+
+		// create struct
 		AudioInfo audio_info;
 		audio_info.channels = encoding_properties.ChannelCount();
 		audio_info.sample_rate = encoding_properties.SampleRate();
 		audio_info.sample_format = "S32LE";
 		audio_info.bitrate = encoding_properties.Bitrate();
 		audio_info.coding_format = "wave";
+
+		// Publish
 		FRobofleetUnrealClientModule::Get()->RobofleetClient->PublishAudioInfo("microphone/info", "hololens", audio_info);
 	}
 
 	void FSpeechPlugin::StopRawAudioCapture()
 	{
 		AudioInputNode.Stop();       // stop audio input node
+
+		// DEBUG: remove
 		stop_time = std::chrono::high_resolution_clock::now();
+
 		MicrophoneAudioGraph.Stop(); // stop AudioGraph object
+
+		// DEBUG: remove
 		duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop_time - start_time);
 		float DurationInSeconds = static_cast<float>(duration.count()) / 1000.0f;
 		UE_LOG(LogTemp, Warning, TEXT("Audio Capture Stopped"));
 		UE_LOG(LogTemp, Warning, TEXT("Time elapsed: %f s"), DurationInSeconds);
 		UE_LOG(LogTemp, Warning, TEXT("Num Audio Messages: %d"), NumCaptures);
-	}
-
-	/*
-	 * CAPTURE RAW AUDIO
-	 * ABOUT: MediaCapture approach.
-	 * REF: File in MicrosoftOpenXR Plugin. See -> MicrosoftOpenXR::FLocatableCamPlugin::StartCameraCapture(...);
-	 */
-	void FSpeechPlugin::InitRawAudioCaptureMCa()
-	{
-		// lock thread
-		std::lock_guard<std::recursive_mutex> lock(RefsLock);
-
-		/*
-		Should definitely check game thread here and if the microphones are ready to capture.
-		*/
-
-		// find all media devices
-		auto FindAllAsyncOp = MediaFrameSourceGroup::FindAllAsync();
-		AsyncInfo = FindAllAsyncOp;
-		FindAllAsyncOp.Completed([=](auto&& asyncInfo, auto&& asyncStatus)
-			{
-				std::lock_guard<std::recursive_mutex> lock(RefsLock);
-				if (asyncStatus == winrt::Windows::Foundation::AsyncStatus::Canceled)
-				{
-					// Do not reset AsyncInfo reference here since the function that cancelled this already reassigned it.
-					return;
-				}
-				else if (asyncStatus != winrt::Windows::Foundation::AsyncStatus::Completed)
-				{
-					AsyncInfo = nullptr;
-					return;
-				}
-				AsyncInfo = nullptr;
-
-
-				// get results of discovered media frame source groups
-				auto DiscoveredGroups = asyncInfo.GetResults();
-				MediaFrameSourceGroup ChosenSourceGroup = nullptr;
-				MediaFrameSourceInfo ChosenSourceInfo = nullptr;
-
-				// specify the media capture init settings.
-				MediaCaptureInitializationSettings CaptureSettings = MediaCaptureInitializationSettings();
-				CaptureSettings.StreamingCaptureMode(StreamingCaptureMode::Audio);
-				CaptureSettings.MemoryPreference(MediaCaptureMemoryPreference::Auto); // For GPU
-				CaptureSettings.VideoProfile(nullptr);
-
-				// loop through discovered groups
-				for (auto&& Group : DiscoveredGroups)
-				{
-					UE_LOG(LogTemp, Warning, TEXT("Discovered Group Info: %s; ID: %s"), Group.DisplayName().c_str(), Group.Id().c_str());
-
-					// For HoloLens, use the video conferencing video profile - this will give the best power consumption.
-					auto profileList = MediaCapture::FindKnownVideoProfiles(Group.Id(), KnownVideoProfile::VideoConferencing);
-
-					if (profileList.Size() == 0)
-					{
-						// No video conferencing profiles in this group, move to the next one.
-						continue;
-					}
-
-					// Cache the first valid group and profile in case we do not find a profile that matches the input description.
-					if (ChosenSourceGroup == nullptr)
-					{
-						ChosenSourceGroup = Group;
-
-						CaptureSettings.SourceGroup(ChosenSourceGroup);
-						CaptureSettings.VideoProfile(profileList.GetAt(0));
-					}
-
-					/*
-					* Do something here with an if statement to see if we got a microphone.
-					*/
-				}
-			});
-	}
-
-	/*
-	 * CAPTURE RAW AUDIO
-	 * ABOUT: This is an attempt using the MediaCapture approach. Sounds promising, but have some hang ups.
-	 * TODO: Continue with is. It builds, but stuck on the final InitializeAsync(initSetting) on line 66 in the following reference code
-	 * REF: https://github.com/microsoft/Windows-universal-samples/blob/main/Samples/HolographicMixedRealityCapture/cpp/MediaCaptureManager.cpp
-	 */
-	void FSpeechPlugin::InitRawAudioCaptureMCb()
-	{
-		// create a media capture object for audio
-		audio_mediaCapture = winrt::Windows::Media::Capture::MediaCapture();
-
-		DeviceInformation::FindAllAsync(DeviceClass::AudioCapture).Completed(
-			[this](winrt::Windows::Foundation::IAsyncOperation<DeviceInformationCollection> const& devices,
-				winrt::Windows::Foundation::AsyncStatus asyncStatus) {
-
-					// print audio devices found
-					auto devices_info = devices.GetResults();
-					UE_LOG(LogTemp, Warning, TEXT("Found Connected Audio Devices:"));
-					for (const auto& device : devices_info) {
-						UE_LOG(LogTemp, Warning, TEXT("Device Name: %s; ID: %s"), device.Name().c_str(), device.Id().c_str());
-					}
-
-					// create audio device capture settings
-					audio_initSettings = winrt::Windows::Media::Capture::MediaCaptureInitializationSettings();
-					audio_initSettings.StreamingCaptureMode(winrt::Windows::Media::Capture::StreamingCaptureMode::Audio);
-					audio_initSettings.MediaCategory(winrt::Windows::Media::Capture::MediaCategory::Media);
-					//audio_initSettings.AudioDeviceId(devices_info.GetAt(3).Id());
-					audio_initSettings.AudioDeviceId(
-						winrt::Windows::Media::Devices::MediaDevice::GetDefaultAudioCaptureId(
-							winrt::Windows::Media::Devices::AudioDeviceRole::Default));
-
-					//UE_LOG(LogTemp, Warning, TEXT("\nAudio Device Being Used: %s; ID: %s"), devices_info.GetAt(3).Name().c_str(), devices_info.GetAt(0).Id().c_str());
-					UE_LOG(LogTemp, Warning, TEXT("\nAudio Device Being Used: %s"), winrt::Windows::Media::Devices::MediaDevice::GetDefaultAudioCaptureId(
-						winrt::Windows::Media::Devices::AudioDeviceRole::Default).c_str());
-
-					// select profile for media capture with found devices
-					for (const auto& device : devices_info)
-					{
-						auto profiles = audio_mediaCapture.FindKnownVideoProfiles(device.Id(), KnownVideoProfile::VideoConferencing);
-						if (profiles.Size() > 0)
-						{
-							audio_initSettings.VideoProfile(profiles.GetAt(0));
-							UE_LOG(LogTemp, Warning, TEXT("\nI Got a profile."));
-						}
-					}
-
-
-					UE_LOG(LogTemp, Warning, TEXT("\nMOVING ON\n"));
-					// Create our capture object with our settings
-					auto InitializeAsyncOp = audio_mediaCapture.InitializeAsync(audio_initSettings);
-					AsyncInfo = InitializeAsyncOp;
-					InitializeAsyncOp.Completed([this](auto&& asyncInfo, auto&& asyncStatus)
-						{
-							std::lock_guard<std::recursive_mutex> lock(RefsLock);
-							if (asyncStatus == winrt::Windows::Foundation::AsyncStatus::Canceled)
-							{
-								// Do not reset AsyncInfo reference here since the function that cancelled this already reassigned it.
-								UE_LOG(LogTemp, Warning, TEXT("No Bueno"));
-								return;
-							}
-							else if (asyncStatus != winrt::Windows::Foundation::AsyncStatus::Completed)
-							{
-								AsyncInfo = nullptr;
-								UE_LOG(LogHMD, Log, TEXT("Failed to open camera, please check microphone capability"));
-								return;
-							}
-							UE_LOG(LogTemp, Warning, TEXT("I MADE IT HERE"));
-							AsyncInfo = nullptr;
-
-						});
-
-			});
 	}
 
 	bool FSpeechPlugin::GetOptionalExtensions(TArray<const ANSICHAR*>& OutExtensions)
@@ -404,7 +263,7 @@ namespace MicrosoftOpenXR
 	const void* FSpeechPlugin::OnBeginSession(XrSession InSession, const void* InNext)
 	{
 		UE_LOG(LogHMD, Warning, TEXT("Killing On Begin Session"));
-		return InNext;
+		return InNext; // DICTATION SESSION KILLER
 		UE_LOG(LogHMD, Warning, TEXT("OnBeginSession called."));
 		Session = InSession;
 		dictation_ = FString("Say Something!");

@@ -61,10 +61,10 @@ namespace MicrosoftOpenXR
 {
 
 	// this is used to create audio
-	struct __declspec(uuid("5B0D3235-4DBA-4D44-865E-8F1D0E4FD04D")) __declspec(novtable) IMemoryBufferByteAccess : ::IUnknown
+	/*struct __declspec(uuid("5B0D3235-4DBA-4D44-865E-8F1D0E4FD04D")) __declspec(novtable) IMemoryBufferByteAccess : ::IUnknown
 	{
 		virtual HRESULT __stdcall GetBuffer(std::uint8_t** value, std::uint32_t* capacity) = 0;
-	};
+	};*/
 
 	class FSpeechPlugin : public IOpenXRExtensionPlugin
 	{
@@ -87,8 +87,6 @@ namespace MicrosoftOpenXR
 		void GetSpeechDictation(FString& Dictation); // exposed to MicrosoftOpenXR as a (Blueprintable function)
 		void GetAllIntegratedDevices();              // gets name and id of all integrated devices
 		void GetIntegratedAudioDevices();            // gets all connected audio based devices like a microphone (Blueprintable function)
-		void InitRawAudioCaptureMCa();               // raw audio capture using MediaCapture approach (not currently used)
-		void InitRawAudioCaptureMCb();               // raw audio capture using MediaCapture approach (not currently used)
 		void InitRawAudioCaptureAG();				 // raw audio capture using AudioGraph approach 
 		void StartRawAudioCapture();
 		void StopRawAudioCapture();

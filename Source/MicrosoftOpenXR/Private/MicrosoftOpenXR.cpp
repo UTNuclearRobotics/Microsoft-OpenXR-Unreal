@@ -18,7 +18,7 @@
 #include "SpatialAnchorPlugin.h"
 #include "SpatialMappingPlugin.h"
 #include "SpeechPlugin.h"
-//#include "AudioPlugin.h"
+#include "AudioPlugin.h"
 
 DEFINE_LOG_CATEGORY(LogAOA)
 
@@ -44,7 +44,7 @@ namespace MicrosoftOpenXR
 			QRTrackingPlugin.Register();
 			LocatableCamPlugin.Register();
 			SpeechPlugin.Register();
-			//AudioPlugin.Register();
+			AudioPlugin.Register();
 #endif	  // PLATFORM_WINDOWS || PLATFORM_HOLOLENS
 
 #if SUPPORTS_REMOTING
@@ -73,7 +73,7 @@ namespace MicrosoftOpenXR
 			QRTrackingPlugin.Unregister();
 			LocatableCamPlugin.Unregister();
 			SpeechPlugin.Unregister();
-			//AudioPlugin.Unregister();
+			AudioPlugin.Unregister();
 #endif	  // PLATFORM_WINDOWS || PLATFORM_HOLOLENS
 
 #if SUPPORTS_REMOTING
@@ -95,7 +95,7 @@ namespace MicrosoftOpenXR
 		FQRTrackingPlugin QRTrackingPlugin;
 		FLocatableCamPlugin LocatableCamPlugin;
 		FSpeechPlugin SpeechPlugin;
-		//FAudioPlugin AudioPlugin;
+		FAudioPlugin AudioPlugin;
 #endif	  // PLATFORM_WINDOWS || PLATFORM_HOLOLENS
 
 #if SUPPORTS_REMOTING
@@ -274,42 +274,32 @@ FString UMicrosoftOpenXRFunctionLibrary::GetSpeechDictation()
 
 void UMicrosoftOpenXRFunctionLibrary::GetAllIntegratedDevices()
 {
-	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.GetAllIntegratedDevices();
+	MicrosoftOpenXR::g_MicrosoftOpenXRModule->AudioPlugin.GetAllIntegratedDevices();
 }
 
 void UMicrosoftOpenXRFunctionLibrary::GetIntegratedAudioDevices()
 {
-	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.GetIntegratedAudioDevices();
+	MicrosoftOpenXR::g_MicrosoftOpenXRModule->AudioPlugin.GetIntegratedAudioDevices();
 }
 
-void UMicrosoftOpenXRFunctionLibrary::InitRawAudioCaptureMCa()
+void UMicrosoftOpenXRFunctionLibrary::InitRawAudioCapture()
 {
-	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.InitRawAudioCaptureMCa();
-}
-
-void UMicrosoftOpenXRFunctionLibrary::InitRawAudioCaptureMCb()
-{
-	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.InitRawAudioCaptureMCb();
-}
-
-void UMicrosoftOpenXRFunctionLibrary::InitRawAudioCaptureAG()
-{
-	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.InitRawAudioCaptureAG();
+	MicrosoftOpenXR::g_MicrosoftOpenXRModule->AudioPlugin.InitRawAudioCapture();
 }
 
 void UMicrosoftOpenXRFunctionLibrary::StartRawAudioCapture()
 {
-	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.StartRawAudioCapture();
+	MicrosoftOpenXR::g_MicrosoftOpenXRModule->AudioPlugin.StartRawAudioCapture();
 }
 
 void UMicrosoftOpenXRFunctionLibrary::StopRawAudioCapture()
 {
-	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.StopRawAudioCapture();
+	MicrosoftOpenXR::g_MicrosoftOpenXRModule->AudioPlugin.StopRawAudioCapture();
 }
 
 void UMicrosoftOpenXRFunctionLibrary::GetRawAudioData()
 {
-	MicrosoftOpenXR::g_MicrosoftOpenXRModule->SpeechPlugin.GetRawAudioData();
+	MicrosoftOpenXR::g_MicrosoftOpenXRModule->AudioPlugin.GetRawAudioCaptureData();
 
 }
 

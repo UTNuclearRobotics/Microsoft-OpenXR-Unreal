@@ -67,13 +67,7 @@ public:
 	static void GetIntegratedAudioDevices();
 
 	UFUNCTION(BlueprintCallable, Category = "MicrosoftOpenXR|OpenXR")
-	static void InitRawAudioCaptureMCa();
-
-	UFUNCTION(BlueprintCallable, Category = "MicrosoftOpenXR|OpenXR")
-	static void InitRawAudioCaptureMCb();
-
-	UFUNCTION(BlueprintCallable, Category = "MicrosoftOpenXR|OpenXR")
-	static void InitRawAudioCaptureAG();
+	static void InitRawAudioCapture();
 
 	UFUNCTION(BlueprintCallable, Category = "MicrosoftOpenXR|OpenXR")
 	static void StartRawAudioCapture();
